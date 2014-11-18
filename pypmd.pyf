@@ -1,0 +1,117 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module pypmd ! in 
+    interface  ! in :pypmd
+        module pypmd ! in :pypmd:pmd_io_module.f90
+            function newunit() ! in :pypmd:pmd_io_module.f90:pypmd
+                integer :: newunit
+            end function newunit
+            subroutine openrd(unit,file,magic_str,endianness,int_sz,db_sz,pmd_version,local_time,periodic,domain_sz,domain_origin,dimensions,xc1,xc2,xc3,n_radtheta,n_radphi,atomic_module,pmd_comment,module_hd_sz,unused_var,stat) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(out) :: unit
+                character*(*) intent(in) :: file
+                character*8 intent(out) :: magic_str
+                integer*1 intent(out) :: endianness
+                integer*1 intent(out) :: int_sz
+                integer*1 intent(out) :: db_sz
+                integer intent(out) :: pmd_version
+                integer dimension(6),intent(out) :: local_time
+                integer*1 dimension(2),intent(out) :: periodic
+                real dimension(3),intent(out) :: domain_sz
+                real dimension(3),intent(out) :: domain_origin
+                integer dimension(3),intent(out) :: dimensions
+                real dimension(8192),intent(out) :: xc1
+                real dimension(8192),intent(out) :: xc2
+                real dimension(8192),intent(out) :: xc3
+                integer intent(out) :: n_radtheta
+                integer intent(out) :: n_radphi
+                character*1023 intent(out) :: atomic_module
+                character*4096 intent(out) :: pmd_comment
+                integer intent(out) :: module_hd_sz
+                integer intent(out) :: unused_var
+                integer intent(out) :: stat
+            end subroutine openrd
+            subroutine openwr(unit,ltime,file,magic_str,endianness,int_sz,db_sz,pmd_version,local_time,periodic,domain_sz,domain_origin,dimensions,xc1,xc2,xc3,n_radtheta,n_radphi,atomic_module,pmd_comment,module_hd_sz,unused_var,stat) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(out) :: unit
+		integer dimension(6),intent(out) :: ltime
+                character*(*) intent(in) :: file
+                character*8 intent(in) :: magic_str
+                integer*1 intent(in) :: endianness
+                integer*1 intent(in) :: int_sz
+                integer*1 intent(in) :: db_sz
+                integer intent(in) :: pmd_version
+                integer dimension(6),intent(in) :: local_time
+                integer*1 dimension(2),intent(in) :: periodic
+                real dimension(3),intent(in) :: domain_sz
+                real dimension(3),intent(in) :: domain_origin
+                integer dimension(3),intent(in) :: dimensions
+                real dimension(8192),intent(in) :: xc1
+                real dimension(8192),intent(in) :: xc2
+                real dimension(8192),intent(in) :: xc3
+                integer intent(in) :: n_radtheta
+                integer intent(in) :: n_radphi
+                character*1023 intent(in) :: atomic_module
+                character*4096 intent(in) :: pmd_comment
+                integer intent(in) :: module_hd_sz
+                integer intent(in) :: unused_var
+                integer intent(out) :: stat
+            end subroutine openwr
+            subroutine openap(unit,file,magic_str,endianness,int_sz,db_sz,pmd_version,local_time,periodic,domain_sz,domain_origin,dimensions,xc1,xc2,xc3,n_radtheta,n_radphi,atomic_module,pmd_comment,module_hd_sz,unused_var,stat) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(out) :: unit
+                character*(*) intent(in) :: file
+                character*8 intent(out) :: magic_str
+                integer*1 intent(out) :: endianness
+                integer*1 intent(out) :: int_sz
+                integer*1 intent(out) :: db_sz
+                integer intent(out) :: pmd_version
+                integer dimension(6),intent(out) :: local_time
+                integer*1 dimension(2),intent(out) :: periodic
+                real dimension(3),intent(out) :: domain_sz
+                real dimension(3),intent(out) :: domain_origin
+                integer dimension(3),intent(out) :: dimensions
+                real dimension(8192),intent(out) :: xc1
+                real dimension(8192),intent(out) :: xc2
+                real dimension(8192),intent(out) :: xc3
+                integer intent(out) :: n_radtheta
+                integer intent(out) :: n_radphi
+                character*1023 intent(out) :: atomic_module
+                character*4096 intent(out) :: pmd_comment
+                integer intent(out) :: module_hd_sz
+                integer intent(out) :: unused_var
+                integer intent(out) :: stat
+            end subroutine openap
+            subroutine rd_box(unit,box,iostat) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(in) :: unit
+                double precision dimension(:,:,:),intent(inout) :: box
+                integer intent(out) :: iostat
+            end subroutine rd_box
+            subroutine append_box(unit,box) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(in) :: unit
+                double precision dimension(:,:,:),intent(in) :: box
+            end subroutine append_box
+            subroutine rd_module_hd(unit,module_header,sz) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(in) :: unit
+                integer intent(in) :: sz
+                character*(sz),intent(out),depend(sz) :: module_header
+            end subroutine rd_module_hd
+            subroutine wr_module_hd(unit,module_header) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(in) :: unit
+                character*(*) intent(in) :: module_header
+            end subroutine wr_module_hd
+            subroutine close(unit) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(in) :: unit
+            end subroutine close
+        end module pypmd
+    end interface 
+end python module pypmd
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

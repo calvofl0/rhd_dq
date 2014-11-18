@@ -1,0 +1,203 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module pyread__user__routines 
+    interface pyread_user_interface 
+        subroutine uio_data_reg(e__test_err) ! in :pybold:uio_struct_rd.f90:pyread:unknown_interface
+            character*(*) :: e__test_err
+        end subroutine uio_data_reg
+    end interface pyread_user_interface
+end python module pyread__user__routines
+
+python module _pybold ! in 
+    interface  ! in :pybold
+        use rhd_dq_module
+        module box ! in :pybold:rhd_dq_box.f90
+            real, allocatable,target,dimension(:,:,:) :: dq_g1
+            real, allocatable,target,dimension(:,:,:) :: dq_g3
+            real :: dq_grav
+            real, allocatable,target,dimension(:,:,:) :: dq_beta
+            character(len=256) :: dq_file
+            real, allocatable,target,dimension(:,:,:) :: dq_jabs
+            real, allocatable,target,dimension(:,:,:) :: dq_mmu
+            integer, optional :: dq_status=0
+            real, allocatable,target,dimension(:,:,:) :: dq_vmflux
+            real, allocatable,target,dimension(:,:,:) :: dq_dpdei
+            integer, optional :: dq_imodel=-1
+            character(len=256) :: dq_parfile
+            real, allocatable,target,dimension(:,:,:) :: dq_dpdrho
+            real, allocatable,target,dimension(:,:,:) :: dq_cs
+            real, allocatable,target,dimension(:,:,:) :: dq_cA
+            real, allocatable,target,dimension(:,:,:) :: dq_ekin
+            logical :: dq_bb_flag
+            real, allocatable,target,dimension(:,:,:) :: dq_T
+            real, allocatable,target,dimension(:,:,:) :: dq_rho
+            real, allocatable,target,dimension(:,:,:) :: dq_P
+            real, allocatable,target,dimension(:,:,:) :: dq_emag
+            real, allocatable,target,dimension(:) :: dq_xc2
+            real, allocatable,target,dimension(:) :: dq_xb1
+            real, allocatable,target,dimension(:) :: dq_xb2
+            real, allocatable,target,dimension(:) :: dq_xb3
+            real :: dq_deltay
+            real :: dq_time
+            real, allocatable,target,dimension(:,:,:) :: dq_Bh
+            real, allocatable,target,dimension(:,:,:) :: dq_Bb1
+            real, allocatable,target,dimension(:,:,:) :: dq_Bb2
+            real, allocatable,target,dimension(:,:,:) :: dq_Bb3
+            real, allocatable,target,dimension(:,:,:) :: dq_plin
+            real, allocatable,target,dimension(:,:,:) :: dq_Babs
+            real, allocatable,target,dimension(:,:,:) :: dq_s
+            integer :: dq_nz
+            integer :: dq_ny
+            integer :: dq_nx
+            integer :: dq_nc_p
+            real, allocatable,target,dimension(:,:,:) :: dq_vh
+            integer :: dq_m2
+            integer :: dq_m3
+            integer :: dq_m1
+            real, allocatable,target,dimension(:) :: dq_xc3
+            real :: dq_deltaz
+            real, allocatable,target,dimension(:) :: dq_xc1
+            real :: dq_deltax
+            real, allocatable,target,dimension(:,:,:) :: dq_kappa
+            real, allocatable,target,dimension(:,:,:) :: dq_csca
+            real, allocatable,target,dimension(:,:,:) :: dq_Bc1
+            real, allocatable,target,dimension(:,:,:) :: dq_Bc2
+            real, allocatable,target,dimension(:,:,:) :: dq_Bc3
+            real, allocatable,target,dimension(:,:,:) :: dq_divB
+            integer :: dq_n3
+            integer :: dq_n2
+            integer :: dq_n1
+            integer :: dq_nmodel
+            integer :: dq_itime
+            real, allocatable,target,dimension(:,:,:) :: dq_B2
+            real, allocatable,target,dimension(:,:,:) :: dq_ei
+            real, allocatable,target,dimension(:,:,:) :: dq_tau
+            real, allocatable,target,dimension(:,:,:) :: dq_vabs
+            real, allocatable,target,dimension(:,:,:) :: dq_j3
+            real, allocatable,target,dimension(:,:,:) :: dq_j2
+            real, allocatable,target,dimension(:,:,:) :: dq_j1
+            real, allocatable,target,dimension(:,:,:) :: dq_mach
+            real :: dq_c_radhtautop
+            real, allocatable,target,dimension(:,:,:) :: dq_v1
+            real, allocatable,target,dimension(:,:,:) :: dq_v2
+            real, allocatable,target,dimension(:,:,:) :: dq_v3
+        end module box
+        !subroutine init(parfile,datafile,imodel) ! in :pybold:pybold.f90
+        !    use rhd_dq_module
+        !    character*256, optional,intent(in) :: parfile=''
+        !    character*256, optional,intent(in) :: datafile=''
+        !    integer, optional,intent(in) :: imodel=-1
+        !end subroutine init
+    end interface
+    interface  ! in :pybold
+        module uio_reader_module ! in :pybold:uio_struct_rd.f90
+            use uio_table_module
+            integer :: ndim
+            character, allocatable,dimension(:,:) :: char1D
+            character*(80) :: char0
+            real, allocatable,dimension(:,:,:,:) :: real4D
+            character, allocatable,dimension(:,:,:,:) :: char3D
+            complex :: comp0
+            integer, allocatable,dimension(:) :: inte1D
+            real, allocatable,dimension(:,:) :: real2D
+            complex, allocatable,dimension(:,:,:,:) :: comp4D
+            character*(80) :: qtype
+            complex, allocatable,dimension(:,:) :: comp2D
+            integer, allocatable,dimension(:,:,:) :: inte3D
+            complex, allocatable,dimension(:) :: comp1D
+            integer :: m4
+            integer :: m1
+            integer :: m3
+            integer :: m2
+            integer :: inte0
+            character, allocatable,dimension(:,:,:) :: char2D
+            integer, allocatable,dimension(:,:,:,:) :: inte4D
+            real, allocatable,dimension(:) :: real1D
+            real :: real0
+            integer, allocatable,dimension(:,:) :: inte2D
+            character, allocatable,dimension(:,:,:,:,:) :: char4D
+            complex, allocatable,dimension(:,:,:) :: comp3D
+            real, allocatable,dimension(:,:,:) :: real3D
+            character*(80) :: name0
+            character*(80) :: unit0
+            character*(80) :: label
+            character*(80) :: r_modelfile
+            character*(80) :: r_parfile
+            integer :: n1
+            integer :: n2
+            integer :: n3
+            integer :: n4
+            integer :: r_nmodel
+            integer :: r_imodel
+            !subroutine uio_data_rd(nc,termt,ntt,ident,name,unit,outstr,ierr) ! in :pybold:uio_struct_rd.f90:uio_reader_module
+            !    use uio_base_module
+            !    use uio_siz_module
+            !    use uio_bulk_module
+            !    use uio_nam_module
+            !    integer intent(in) :: nc
+            !    character dimension(2,(20),(*)),intent(inout,c) :: termt
+            !    integer intent(inout) :: ntt
+            !    character*(*) intent(out) :: ident
+            !    character*(*), optional,intent(out) :: name
+            !    character*(*), optional,intent(out) :: unit
+            !    character*(*), optional,intent(out) :: outstr
+            !    integer, optional,intent(out) :: ierr
+            !end subroutine uio_data_rd
+            !subroutine uio_struct_rd(filename,channel,headread,startlabel,endlabel,nlabel,substartlabel,subendlabel,outstr,ierr,name_flag,unit_flag) ! in :pybold:uio_struct_rd.f90:uio_reader_module
+            !    use uio_table_module
+            !    use uio_siz_module
+            !    use uio_bulk_module
+            !    use uio_nam_module
+            !    character*(*) intent(in) :: filename
+            !    integer, optional,intent(in) :: channel
+            !    logical, optional,intent(in) :: headread
+            !    character*(*), optional,intent(in) :: startlabel
+            !    character*(*), optional,intent(in) :: endlabel
+            !    integer, optional,intent(in) :: nlabel
+            !    character*(*), optional,intent(in) :: substartlabel
+            !    character*(*), optional,intent(in) :: subendlabel
+            !    character*(*), optional,intent(out) :: outstr
+            !    integer, optional,intent(out) :: ierr
+            !    logical, optional,intent(in) :: name_flag
+            !    logical, optional,intent(in) :: unit_flag
+            !end subroutine uio_struct_rd
+        end module uio_reader_module
+        subroutine init ! in :pybold:pybold.f90
+            use uio_bulk_module
+        end subroutine init
+        subroutine pyread(uio_data_reg,modelfile,parfile,imodel) ! in :pybold:pybold.f90
+            use uio_reader_module
+            use pyread__user__routines
+            external uio_data_reg
+            character*(*) intent(in) :: modelfile
+            character*(*) intent(in) :: parfile
+            integer intent(in) :: imodel
+        end subroutine pyread
+        subroutine get_dq(uio_data_reg,dq) ! in :pybold:pybold.f90
+            use uio_reader_module
+            use pyread__user__routines
+            use rhd_dq_module
+            external uio_data_reg
+            character*(*) intent(in) :: dq
+        end subroutine get_dq
+	subroutine open_model(modelfile, parfile) ! in :pybold:pybold.f90
+            character*(*) intent(in) :: modelfile
+            character*(*) intent(in) :: parfile
+	end subroutine open_model
+	subroutine count_model() ! in :pybold:pybold.f90
+	end subroutine count_model
+	subroutine close_model() ! in :pybold:pybold.f90
+	end subroutine close_model
+        subroutine read_header(uio_data_reg) ! in :pybold:pybold.f90
+            use uio_reader_module
+            use pyread__user__routines
+            external uio_data_reg
+        end subroutine read_header
+        subroutine read_next(uio_data_reg) ! in :pybold:pybold.f90
+            use uio_reader_module
+            use pyread__user__routines
+            external uio_data_reg
+        end subroutine read_next
+    end interface
+end python module _pybold

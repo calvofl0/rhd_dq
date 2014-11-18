@@ -1,0 +1,144 @@
+# Compiler
+FC=@FC@
+G77=@G77@
+OPENMP=@OPENMP@
+
+# CO5BOLD paths
+COBOLD_3DPARTY=@COBOLD_3DPARTY@
+ARCH=@ARCH@
+F90_BASEPATH="@F90_BASEPATH@"
+RHDPATH="$(F90_BASEPATH)/hd/rhd"
+DEPSRCPATH="$(RHDPATH)/$(ARCH)"
+FPIC=-fPIC
+ifeq ($(COBOLD_3DPARTY),yes)
+	DEPSRCPATH=@DEPSRCPATH@
+endif
+
+# Preprocessing
+ifeq ($(FC),ifort)
+	PP=-fpp
+	BACKTRACE=-traceback
+	OPENMP_FCFLAGS=-openmp
+else
+	PP=-cpp
+	BACKTRACE=-fbacktrace
+	OPENMP_FCFLAGS=-fopenmp
+endif
+
+ifneq ($(OPENMP),yes)
+	OPENMP_FCFLAGS=
+endif
+
+VISIT_LDFLAG=@VISIT_LDFLAG@
+
+# Debug
+DEBUG=@DEBUG@
+
+ifeq ($(DEBUG),yes)
+	FCFLAGS=-c $(OPENMP_FCFLAGS) $(FPIC) $(PP) -g $(BACKTRACE) $(PYBOLD) -I"$(DEPSRCPATH)"
+	FLFLAGS=-g $(BACKTRACE)
+else
+	FCFLAGS=-c $(OPENMP_FCFLAGS) $(FPIC) $(PP) $(PYBOLD) -I"$(DEPSRCPATH)"
+	FLFLAGS=
+endif
+
+ifeq ($(OPENMP),yes)
+	ifeq ($(FC),ifort)
+		LDFLAGS=-liomp5
+	else
+		LDFLAGS=-lgomp
+	endif
+endif
+
+# Makefile variables
+OUT=rhd_dq_module.a
+OUTLIB=_pybold.so pypmd.so
+SRC=$(wildcard *.f90)
+OBJ=$(SRC:.f90=.o)
+DEP=rhd_sub_module.o gasinter_routines.o str_module.o const_module.o uio_bulk_module.o rhd_action_module.o rhd_box_module.o rhd_gl_module.o rhd_io_module.o rhd_prop_module.o uio_base_module.o uio_bulk_module.o uio_mac_module.o uio_table_module.o opta_routines.o opta_dust.o
+
+all: $(OUT)
+	
+
+rhd_dq_module.a: $(OBJ)
+	@ar rcvs "$(OUT)" \
+                "rhd_dq_module.o" \
+                "rhd_dq_box.o" \
+		"uio_reader_module.o" \
+                "$(DEPSRCPATH)/rhd_sub_module.o" \
+                "$(DEPSRCPATH)/rhd_action_module.o" \
+                "$(DEPSRCPATH)/rhd_box_module.o" \
+                "$(DEPSRCPATH)/rhd_gl_module.o" \
+                "$(DEPSRCPATH)/rhd_io_module.o" \
+                "$(DEPSRCPATH)/rhd_prop_module.o" \
+                "$(DEPSRCPATH)/uio_base_module.o" \
+                "$(DEPSRCPATH)/uio_bulk_module.o" \
+                "$(DEPSRCPATH)/uio_mac_module.o" \
+                "$(DEPSRCPATH)/uio_table_module.o" \
+                "$(DEPSRCPATH)/opta_routines.o" \
+                "$(DEPSRCPATH)/opta_dust.o" \
+                "$(DEPSRCPATH)/gasinter_routines.o" \
+                "$(DEPSRCPATH)/str_module.o" \
+                "$(DEPSRCPATH)/const_module.o"
+
+uio_reader_module.o: uio_reader_module.f90 rhd_dq_module.o rhd_dq_box.o
+	@$(MAKE) dep
+	$(FC) $(FCFLAGS) $<
+
+rhd_dq_module.o: rhd_dq_module.f90 rhd_dq_box.o
+	@$(MAKE) dep
+	$(FC) $(FCFLAGS) $<
+
+rhd_dq_box.o: rhd_dq_box.f90
+	@$(MAKE) dep
+	$(FC) $(FCFLAGS) $<
+
+pypmd: pmd_io_module.f90
+	f2py -m pypmd -c --f90exec="$(FC)" --f90flags="$(FPIC)" pypmd.pyf $^
+
+pybold: pybold.f90
+	@$(MAKE) clean
+	@rm -rf $(OUT)
+	@rm -rf $(OUTLIB)
+	@$(MAKE) FPIC=$(FPIC) PYBOLD=-DPYBOLD
+	#f2py -h pybold.pyf $<
+	f2py -m _pybold -c --f90exec=$(FC) --f90flags="$(FCFLAGS) -DPYBOLD" rhd_dq_module.a $(LDFLAGS) _pybold.pyf $<
+	rm -rf *.o
+	rm -rf *.mod
+	rm -rf "$(OUT)"
+
+pyvisit: pyvisit.f90 pybold
+	@if [ "$(VISIT_LDFLAG)" = "-L" ]; then echo "Please reconfigure with pyvisit support."; exit 1; fi
+	f2py -m _pyvisit -c --f90exec=$(FC) --f90flags="-I./3dparty/libsim" $(VISIT_LDFLAG) -ldl -lsimV2 -lsimV2f -lsimV2dyn pyvisit.pyf $<
+
+dep: depend
+	
+
+depend: $(DEP)
+	@(if [ -f $(DEPSRCPATH)/Makefile ]; then \
+		cd $(DEPSRCPATH) && $(MAKE) $^; \
+	else \
+		cd $(DEPSRCPATH) && ./configure && $(MAKE) $^; \
+	fi)
+
+%.o:
+	
+
+.PHONY: dep depend clean mrproper
+
+clean:
+	rm -rf *.o
+	rm -rf *.mod
+	rm -rf *.pyc
+
+mrproper: clean
+	rm -rf $(OUT)
+	rm -rf $(OUTLIB)
+	rm -rf _pyvisit.so
+	(cd $(DEPSRCPATH); \
+		make clean; \
+		rm -rf Makefile; \
+		rm -rf uio_filedef_module.f90; \
+		rm -rf opta_par_module.f90; \
+		rm -rf compiler_flags.info \
+	)
