@@ -92,7 +92,9 @@ if args.input[0].endswith('.tar') :
 					mrk_snap1 += [mark[4]]
 					mrk_serie += [serie]
 					if len(mark) > 5 :
-						mrk_color += [mark[5]]
+						if not mark[5].startswith('#'):
+							mrk_color += [mark[5]]
+						else : mrk_color += [mrk_cdef]
 					else : mrk_color += [mrk_cdef]
 		with open(tmpfolder+'/index.dat', 'rt') as f :
 			findex=f.read().splitlines()
