@@ -14,7 +14,7 @@ __pycache__/
 Makefile
 config.log
 config.status
-autom4te.cache
+autom4te.cache/
 
 # Backups and swap files
 *.bak
@@ -53,4 +53,4 @@ autom4te.cache
 /3dparty/cobold/*.d
 /3dparty/cobold/opta_par_module.f90
 /3dparty/cobold/uio_filedef_module.f90
-
+/3dparty/cobold/compiler_flags.info

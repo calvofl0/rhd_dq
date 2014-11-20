@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Python interface to the pyvisit backend Fortran module.
+
+See documentation for the "simulate" function.
+"""
 
 from _pyvisit import *
 import pybold
@@ -10,12 +15,14 @@ import numpy as np
 
 arrtype = np.float32
 
-mean=pybold.uio_struct()
-mean.load('rhd-test.mean')
-mean.objects
-model=pybold.uio_struct()
-model.load('rhd-test.sta')
-model.objects
+# Testing
+
+#mean=pybold.uio_struct()
+#mean.load('rhd-test.mean')
+#mean.objects
+#model=pybold.uio_struct()
+#model.load('rhd-test.sta')
+#model.objects
 
 #pv_regsim("TestSim", "Test simulation", "/no/useful/path")
 #pv_regmesh2d("mesh2d", mean.rad['xb1'].value, mean.rad['xb2'].value, mean.rad['xb1'].unit, mean.rad['xb2'].unit)
@@ -23,6 +30,18 @@ model.objects
 #pv_runsim()
 
 def simulate(*args, **kwargs):
+	'''
+	Lauch a simulation with VisIt.
+
+	>>> pyvisit.simulate(var1, (field1_x, field1_y, field1_z), var2,...)
+
+	One can also provide optional arguments:
+		- max_sz	(maximal size of the box sent to VisIt, make it
+				coarser if necessary)
+		- box_sz	(the box is first of all cropped to this size)
+		- centre 	(when cropping, specify the centre of the new
+				smaller box).
+	'''
 	meshes = ()	# Tuple of uio_struct (all different) corresponding to args
 	mesh_id = ()	# Tuple of indices, so that meshes[mesh_id[i]] corresponds to args[i]
 	dim = ()	# Tuple of meshes dimensions for each arg in args
