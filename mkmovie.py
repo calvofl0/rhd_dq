@@ -16,6 +16,9 @@ import sys
 import pickle
 from numpy import min as npmin
 from numpy import max as npmax
+from numpy import array
+from numpy import uint8
+from numpy import transpose
 from matplotlib.pyplot import imsave
 from matplotlib.pylab import cm
 from tempfile import mkdtemp
@@ -23,6 +26,7 @@ from shutil import rmtree
 from os import system
 from os.path import basename
 from os.path import abspath
+from os.path import isfile
 from glob import glob
 from socket import gethostname
 
@@ -40,20 +44,22 @@ def check_ext_out(filename) :
 		raise argparse.ArgumentTypeError("%s has not a recognized extension." % filename)
 	return filename
 
-def check_legend(legend) :
-	if legend and not PIL :
+def check_pil(param) :
+	if param and not PIL :
 		raise argparse.ArgumentTypeError("You need PIL Python module to add a legend.")
-	return legend
+	return param
 
 description = 'Creates a movie from a MEAN file.'
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('-l', '--legend', help='add legend', action='store_true')
+parser.add_argument('-z', '--zones', help='add zones')
 parser.add_argument('-m', '--marks', help='draw marks')
 parser.add_argument('input', help='input MEAN/tar file.', type=check_ext_in, nargs='+')
 parser.add_argument('output', help='output mp4/tar file.', type=check_ext_out)
 args = parser.parse_args()
 
-check_legend(args.legend)
+check_pil(args.legend)
+check_pil(args.zones)
 
 tmpfolder = mkdtemp()
 
@@ -62,8 +68,8 @@ if args.input[0].endswith('.tar') :
 	system('tar xf '+args.input[0]+' -C '+tmpfolder)
 	with open(tmpfolder+'/minmax.dat', 'rb') as f :
 		vmin, vmax = pickle.load(f)
-	if args.legend or args.marks :
-		print('Adding legend and/or marks...')
+	if args.legend or args.marks or args.zones:
+		print('Adding legend and/or marks and/or zones...')
 		if args.marks :
 			mrk_cdef  = 'red'
 			mrk_rad   = 25
@@ -98,6 +104,12 @@ if args.input[0].endswith('.tar') :
 					else : mrk_color += [mrk_cdef]
 		with open(tmpfolder+'/index.dat', 'rt') as f :
 			findex=f.read().splitlines()
+		args_zones=False
+		if args.zones :
+			if isfile(args.zones):
+				with open(tmpfolder+'/overlayers.dat') as f :
+					overlayers = pickle.load(f)
+				args_zones=True
 		snpidx=0
 		serie=0
 		itime_prev=0
@@ -115,6 +127,19 @@ if args.input[0].endswith('.tar') :
 			cmd_leg  = ''
 			if itime_prev > int(cmd_itime) : serie += 1
 			itime_prev = int(cmd_itime)
+			if args_zones :
+				if overlayers.has_key(int(cmd_itime)) :
+					print("\t\tAdding overlayer(s)...")
+					snapf=Image.open(cmd_file)
+					snappx=array(snapf.getdata(), dtype=uint8)
+					snappx=snappx.reshape(snapf.size[1], snapf.size[0], snappx.shape[1])
+					snappx=snappx[::-1,:,:]
+					for l in overlayers[int(cmd_itime)] :
+						for ch in range(3) :
+							snappx[:,:,ch][l[1]]=uint8((1.-l[0])*snappx[:,:,ch][l[1]])
+						snappx[:,:,2][l[1]]=uint8(l[0]*255.)
+					snappx=snappx[::-1,:,:]
+					Image.fromarray(snappx).save(cmd_file)
 			if args.legend :
 				cmd_leg += ' \( \( -gravity NorthWest'
 				cmd_leg += ' -background "#0008"'
