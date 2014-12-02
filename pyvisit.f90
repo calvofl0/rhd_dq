@@ -317,6 +317,7 @@ integer                                 :: t0
 !
 call system_clock(t0)
 !
+err = visitsetoptions("-cli -nowin -nosplash -nowindowmetrics", 38)
 err = visitsetupenv()
 err = visitinitializesim(trim(simulation%name), len(trim(simulation%name)), &
         trim(simulation%comment), len(trim(simulation%comment)), &
