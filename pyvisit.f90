@@ -579,6 +579,7 @@ do
   if(visitstrcmp(name, lname, trim(scalar%name), len(trim(scalar%name))).eq.0) then
     if(visitvardataalloc(h).eq.VISIT_OKAY) then
       nvals = size(scalar%p)
+      print*, loc(scalar%p)
       err = visitvardatasetf(h, VISIT_OWNER_VISIT,1,nvals,scalar%p)
       print *, 'All seems ok...'
     endif
@@ -590,8 +591,8 @@ end do
 do
   if(visitstrcmp(name, lname, trim(vector%name), len(trim(vector%name))).eq.0) then
     if(visitvardataalloc(h).eq.VISIT_OKAY) then
-      nvals = size(vector%p)
-      print*, loc(vectors%p)
+      nvals = int(size(vector%p)/3)
+      print*, loc(vector%p)
       err = visitvardatasetf(h, VISIT_OWNER_VISIT,3,nvals,vector%p)
       print *, 'All seems ok...'
     endif

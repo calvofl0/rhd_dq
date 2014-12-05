@@ -210,9 +210,9 @@ def simulate(*args, **kwargs):
 			box2 = box2[id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
 			box3 = box3[id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
 			box=np.empty(np.size(box1)+np.size(box2)+np.size(box3), order='F', dtype=arrtype)
-			box[0::3] = np.transpose(box1,(1,0,2)).flatten()
-			box[1::3] = np.transpose(box2,(1,0,2)).flatten()
-			box[2::3] = np.transpose(box3,(1,0,2)).flatten()
+			box[0::3] = np.transpose(box1,(2,0,1)).flatten()
+			box[1::3] = np.transpose(box2,(2,0,1)).flatten()
+			box[2::3] = np.transpose(box3,(2,0,1)).flatten()
 			trash+=(box,)
 			pv_regvector(meshes[mesh_id0[index]]['box_id'].value+'.vect,'+key[0].name+','+key[1].name+','+key[2].name,mesh_name[mesh_id0[index]],box,'vect,'+key[0].unit+','+key[1].unit+','+key[2].unit)
 		elif size(key.value)==mesh_cells[mesh_id0[index]]:
