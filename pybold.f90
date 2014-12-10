@@ -260,3 +260,148 @@ select case (dq)
           call record('link')
 end select
 end subroutine get_dq
+!
+subroutine write_model(modelfile, xb1, xb2, xb3, xc1, xc2, xc3, &
+                       v1, v2, v3, rho, ei, Bb_flag, Bb1, Bb2, Bb3, &
+                       B1_unit, B2_unit, B3_unit, dtime, itime, time, &
+                       time_db, history, version, time_out_mean_last, &
+                       time_out_full_last, m1, n1, m2, n2, m3, n3)
+!use const_module
+use rhd_gl_module
+use rhd_box_module
+use rhd_sub_module
+!use rhd_io_module
+!use tabinter_coeff_module
+use uio_base_module
+use rhd_prop_module
+implicit none
+!
+! --- I/O parameters ---
+character*(*),              intent(in)  :: modelfile
+integer,                    intent(in)  :: itime, m1, n1, m2, n2, m3, n3
+real, target, dimension(:), &
+                         intent(inout)  :: xb1, xb2, xb3, xc1, xc2, xc3
+real, target, dimension(:,:,:), &
+                         intent(inout)  :: v1, v2, v3, rho, ei, Bb1, Bb2, Bb3
+real,                       intent(in)  :: dtime, time, &
+                                           time_out_mean_last,time_out_full_last
+real(kind=kind(0.0D+00)),   intent(in)  :: time_db
+character, dimension(:,:), &
+                            intent(in)  :: history
+character(len=80),          intent(in)  :: version, B1_unit, B2_unit, B3_unit
+logical,                    intent(in)  :: Bb_flag
+!
+! --- Local variables ---
+type(box_type)                          :: box
+character(len=80)                       :: date_end
+character(len=80), dimension(nhismax)   :: history_in, history_end
+character(len=80), dimension(1)         :: description
+integer                                 :: ncbox, nhis_in, nhis_end, nchars, &
+                                           i, j
+!
+nhis_in=size(history,1)
+nchars=size(history,2)
+do i=1,nhismax
+  history_in(i)=repeat(' ',80)
+  history_end(i)=repeat(' ',80)
+end do
+do i=1,nhis_in
+  do j=1,nchars
+    history_in(i)(j:j)=history(i,j)
+  end do
+end do
+!print*, modelfile, xb1, xb2, xb3, xc1, xc2, xc3, &
+!                       v1, v2, v3, rho, ei, Bb_flag, Bb1, Bb2, Bb3, &
+!                       itime, time, time_db, history_in, &
+!                       time_out_mean_last, time_out_full_last, &
+!                       m1, n1, m2, n2, m3, n3, shape(history)
+!
+box%m1=m1
+box%n1=n1
+box%m2=m2
+box%n2=n2
+box%m3=m3
+box%n3=n3
+!
+box%xb1=>xb1(m1:n1+1)
+box%xb2=>xb2(m2:n2+1)
+box%xb3=>xb3(m3:n3+1)
+box%xc1=>xc1(m1:n1)
+box%xc2=>xc2(m2:n2)
+box%xc3=>xc3(m3:n3)
+!
+box%rho=>rho(m1:n1,m2:n2,m3:n3)
+box%ei=>ei(m1:n1,m2:n2,m3:n3)
+box%v1=>v1(m1:n1,m2:n2,m3:n3)
+box%v2=>v2(m1:n1,m2:n2,m3:n3)
+box%v3=>v3(m1:n1,m2:n2,m3:n3)
+!
+prop%Bb1_IsInFile_flag=.false.
+prop%Bb2_IsInFile_flag=.false.
+prop%Bb3_IsInFile_flag=.false.
+if(Bb_flag) then
+  box%Bb1=>Bb1(m1:n1+1,m2:n2,m3:n3)
+  box%Bb2=>Bb2(m1:n1,m2:n2+1,m3:n3)
+  box%Bb3=>Bb3(m1:n1,m2:n2,m3:n3+1)
+  prop%Bb1_IsInFile_flag=.true.
+  prop%Bb2_IsInFile_flag=.true.
+  prop%Bb3_IsInFile_flag=.true.
+  prop%B1_unit=B1_unit
+  prop%B2_unit=B2_unit
+  prop%B3_unit=B3_unit
+endif
+!
+! --- History ---
+call uio_dattim(date_end)
+history_end(1:nhis_in)=history_in(1:nhis_in)
+if (nhis_in > (nhismax-1)) then
+  history_end(nhismax/2-1)='...'
+  history_end(nhismax/2:nhismax-3)=history_in(nhis_in-(nhismax-3)+nhismax/2:nhis_in)
+  nhis_end=nhismax-1
+else
+  nhis_end=nhis_in
+endif
+nhis_end=nhis_end+1
+history_end(nhis_end)='Saved box with Pybold: ' // trim(date_end)
+!
+description=(/'Pybold-generated RHD-simulation model snapshot'/)
+!print*, 'open,model,box,endmo,close', ncbox, dtime, &
+!                  time_out_full_last, &
+!                  time_out_mean_last, modelfile, &
+!                  'unformatted', 'ieee_4', 1, &
+!                  description, nhis_end, history_end, &
+!                  trim(version)
+call rhd_box_Write('open,model,box,endmo,close', ncbox, box=box, dtime=dtime, &
+                  time_out_full_last=time_out_full_last, &
+                  time_out_mean_last=time_out_mean_last, file=modelfile, &
+                  form='unformatted', conv='ieee_4', ndes=1, &
+                  description=description, nhis=nhis_end, history=history_end, &
+                  version=trim(version))
+!
+! --- Open file for writing in uio-form ---
+!call rhd_box_WrData('open', gl%nc_p, ncbox, file=modelfile, &
+!                   form='unformatted', conv='ieee_4', ndes=1, &
+!                   description=description, nhis=nhis_end, &
+!                   history=history_end, version=trim(version))
+! --- Write model header ---
+!call rhd_box_WrData('model', gl%nc_p, ncbox, time_unit=time_unit, &
+!                   itime=itime, time=time, time_db=time_db, dtime=dtime, &
+!                   time_out_full_last=time_out_full_last, &
+!                   time_out_mean_last=time_out_mean_last)
+! --- Write modelbox ---
+!call rhd_box_WrData('box', gl%nc_p, ncbox, &
+!                   time_unit=time_unit, &
+!                   x1_unit=x1_unit, x2_unit=x2_unit, x3_unit=x3_unit, &
+!                   rho_unit=rho_unit, v_unit=v_unit, e_unit=e_unit, &
+!                   box_id=box_id, &
+!                   m1=m1, m2=m2, m3=m3, n1=n1, n2=n2, n3=n3, &
+!                   itime=itime, time=time, time_db=time_db, dtime=dtime, &
+!                   xc1=xc1, xc2=xc2, xc3=xc3, &
+!                   xb1=xb1, xb2=xb2, xb3=xb3, &
+!                   rho=rho, ei=ei, v1=v1, v2=v2, v3=v3, &
+!                   Bb1=Bb1, Bb2=Bb2, Bb3=Bb3)
+! --- Close file ---
+!call rhd_box_WrData('endmo', gl%nc_p, ncbox)
+! --- Close file ---
+!call rhd_box_WrData('close', gl%nc_p, ncbox)
+end subroutine write_model

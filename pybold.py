@@ -1224,6 +1224,144 @@ class uio_struct(dict):
 	closed.
 		"""
 		close_model()
+	def export(self, filename, **kwargs):
+	        # Parse optional arguments
+        	for key in kwargs:
+	                if key=='max_sz': max_sz=kwargs[key]
+	                elif key=='box': box=kwargs[key]
+	                elif key=='centre': centre=kwargs[key]
+	        if not 'max_sz' in locals(): max_sz=(-1,-1,-1)
+	        if not 'box' in locals(): box=(-1,-1,-1)
+	        if not 'centre' in locals(): centre=(-1,-1,-1)
+
+                id_min0=np.array([0,0,0])
+                id_max0=np.array([np.shape(self.z['xb1'].value)[0],np.shape(self.z['xb2'].value)[1],np.shape(self.z['xb3'].value)[2]])
+                id_min=id_min0.copy()
+                id_max=id_max0.copy()
+                steps=np.array([1,1,1])
+                for i in range(3):
+                        if centre[i]<0 and box[i]>=0 : centre[i]=0
+                        if centre[i]>=0 :
+                                if box[i]>=0 :
+                                        id_min[i]=max(id_min0[i],int(np.ceil(centre[i]-box[i]/2.)))
+                                        id_max[i]=min(id_max0[i],1+int(np.floor(centre[i]+box[i]/2.)))
+                                        if max_sz[i]>=0 :
+                                                steps[i]=max(1,int(np.floor((id_max[i]-id_min[i]+1)/max_sz[i])))
+                                else :
+                                        if max_sz[i]>=0 :
+                                                id_min[i]=max(id_min[i],int(np.ceil(centre[i]-max_sz[i]/2.)))
+                                                id_max[i]=min(id_max[i],1+int(np.floor(centre[i]+max_sz[i]/2.)))
+                        else :
+                                if max_sz[i]>=0 :
+                                        steps[i]=max(1,int(np.floor((id_max[i]-id_min[i]+1)/max_sz[i])))
+		m1=id_min[0]+1
+		m2=id_min[1]+1
+		m3=id_min[2]+1
+		n1=id_max[0]-1
+		n2=id_max[1]-1
+		n3=id_max[2]-1
+		if hasattr(self.z, 'bb1'): Bb_flag = True
+		else : Bb_flag = False
+                if steps[0]==1 :
+                        xb1=np.asfortranarray(self.z['xb1'].value)
+                        xc1=np.asfortranarray(self.z['xc1'].value)
+                else :
+                        xb1=np.array(self.z['xb1'].value[id_min[0]:id_max[0]:steps[0],:,:],order='F', dtype=arrtype)
+                        xc1=np.array(self.z['xc1'].value[id_min[0]:id_max[0]-1:steps[0],:,:],order='F', dtype=arrtype)
+                if steps[1]==1 :
+                        xb2=np.asfortranarray(self.z['xb2'].value)
+                        xc2=np.asfortranarray(self.z['xc2'].value)
+                else :  
+                        xb2=np.array(self.z['xb2'].value[:,id_min[1]:id_max[1]:steps[1],:],order='F', dtype=arrtype)
+                        xc2=np.array(self.z['xc2'].value[:,id_min[1]:id_max[1]-1:steps[1],:],order='F', dtype=arrtype)
+                if steps[2]==1 :
+                        xb3=np.asfortranarray(self.z['xb3'].value)
+                        xc3=np.asfortranarray(self.z['xc3'].value)
+                else :
+                        xb3=np.array(self.z['xb3'].value[:,:,id_min[2]:id_max[2]:steps[2]],order='F', dtype=arrtype)
+                        xb3=np.array(self.z['xc3'].value[:,:,id_min[2]:id_max[2]-1:steps[2]],order='F', dtype=arrtype)
+		v1=self.z['v1'].value
+		v2=self.z['v2'].value
+		v3=self.z['v3'].value
+		rho=self.z['rho'].value
+		ei=self.z['ei'].value
+		boxes = ['v1', 'v2', 'v3', 'rho', 'ei'];
+		if Bb_flag:
+			Bb1=self.z['bb1'].value
+			Bb2=self.z['bb2'].value
+			Bb3=self.z['bb3'].value
+			B1_unit=self.z['bb1'].unit
+			B2_unit=self.z['bb2'].unit
+			B3_unit=self.z['bb3'].unit
+			boxes += ['Bb1', 'Bb2', 'Bb3']
+		else :
+			Bb1=np.empty((0,0,0),dtype=np.float32)
+			Bb2=Bb1
+			Bb3=Bb1
+			B1_unit=''
+			B2_unit=''
+			B3_unit=''
+                if not (np.all(steps==[1,1,1])) :
+			m1=1
+			m2=1
+			m3=1
+			n1=id_max[0]-id_min[0]-1
+			n2=id_max[1]-id_min[1]-1
+			n3=id_max[2]-id_min[2]-1
+			for box in boxes:
+				vars()[box] = vars()[box][id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
+		if hasattr(self.z,'time_db'):
+			time_db=self.z['time_db'].value
+		else: time_db=self['modeltime'].value
+		if hasattr(self, 'head'):
+			version=self.head['version'].value
+			history=self.head['history'].value
+		else :
+			version=''
+			history=np.array([''])
+		if hasattr(self, 'time_out_mean_last') :
+			toml = self['time_out_mean_last'].value
+		else :
+			toml = 0.0
+		if hasattr(self, 'time_out_full_last') :
+			tofl = self['time_out_full_last'].value
+		else :
+			tofl = 0.0
+		history=np.array([list(h.ljust(80)) for h in history])
+		print(filename)
+		print(np.shape(xb1))
+		print(np.shape(xb2))
+		print(np.shape(xb3))
+		print(np.shape(xc1))
+		print(np.shape(xc2))
+		print(np.shape(xc3))
+		print(np.shape(v1))
+		print(np.shape(v2))
+		print(np.shape(v3))
+		print(np.shape(rho))
+		print(np.shape(ei))
+		print(Bb_flag)
+		print(np.shape(Bb1))
+		print(np.shape(Bb2))
+		print(np.shape(Bb3))
+		print(B1_unit)
+		print(B2_unit)
+		print(B3_unit)
+		print(self['dtime'].value)
+		print(self['modelitime'].value)
+		print(self['modeltime'].value)
+		print(str(time_db))
+		print(history)
+		print(version)
+		print(str(toml))
+		print(str(tofl))
+		print(str(m1))
+		print(str(n1))
+		print(str(m2))
+		print(str(n2))
+		print(str(m3))
+		print(str(n3))
+		write_model(filename, xb1, xb2, xb3, xc1, xc2, xc3, v1, v2, v3, rho, ei, Bb_flag, Bb1, Bb2, Bb3, B1_unit, B2_unit, B3_unit, self['dtime'].value, self['modelitime'].value, self['modeltime'].value, time_db, history, version, toml, tofl, m1, n1, m2, n2, m3, n3)
 	# PMD routines
 	def pmd_parse(self, pmd_handle):
 		unit			= pmd_handle[0]

@@ -145,17 +145,17 @@ def simulate(*args, **kwargs):
 				else :
 					if max_sz[i]>=0 :
 						steps[i]=max(1,int(np.floor((id_max[i]-id_min[i]+1)/max_sz[i])))
-			if id_min0[0]==id_min[0] and id_max0[0]==id_max[0] and steps[i]==1 :
+			if id_min0[0]==id_min[0] and id_max0[0]==id_max[0] and steps[0]==1 :
 				xb1=np.asfortranarray(mesh['xb1'].value)
 			else :
 				xb1=np.array(mesh['xb1'].value[id_min[0]:id_max[0]:steps[0],:,:],order='F', dtype=arrtype)
 			trash+=(xb1,)
-			if id_min0[1]==id_min[1] and id_max0[1]==id_max[1] and steps[i]==1 :
+			if id_min0[1]==id_min[1] and id_max0[1]==id_max[1] and steps[1]==1 :
 				xb2=np.asfortranarray(mesh['xb2'].value)
 			else :
 				xb2=np.array(mesh['xb2'].value[:,id_min[1]:id_max[1]:steps[1],:],order='F', dtype=arrtype)
 			trash+=(xb2,)
-			if id_min0[2]==id_min[2] and id_max0[2]==id_max[2] and steps[i]==1 :
+			if id_min0[2]==id_min[2] and id_max0[2]==id_max[2] and steps[2]==1 :
 				xb3=np.asfortranarray(mesh['xb3'].value)
 			else :
 				xb3=np.array(mesh['xb3'].value[:,:,id_min[2]:id_max[2]:steps[2]],order='F', dtype=arrtype)
