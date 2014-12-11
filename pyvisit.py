@@ -59,16 +59,19 @@ def simulate(*args, **kwargs):
 		if key=='max_sz': max_sz=kwargs[key]
 		elif key=='box': box=kwargs[key]
 		elif key=='centre': centre=kwargs[key]
+		elif key=='swapXY': swapXY=kwargs[key]
 	if not 'max_sz' in locals(): max_sz=(-1,-1,-1)
 	if not 'box' in locals(): box=(-1,-1,-1)
 	if not 'centre' in locals(): centre=(-1,-1,-1)
+	if not 'swapXY' in locals(): swapXY=False
 	def tuple_swap_xy(t):
 		u=(t[1], t[0])
 		u+=t[2:]
 		return u
-	max_sz=tuple_swap_xy(max_sz)
-	box=tuple_swap_xy(box)
-	centre=tuple_swap_xy(centre)
+	if swapXY:
+		max_sz=tuple_swap_xy(max_sz)
+		box=tuple_swap_xy(box)
+		centre=tuple_swap_xy(centre)
 	
 	# Parse boxes to plot and identify relevant meshes
 	index = 0
@@ -160,7 +163,10 @@ def simulate(*args, **kwargs):
 			else :
 				xb3=np.array(mesh['xb3'].value[:,:,id_min[2]:id_max[2]:steps[2]],order='F', dtype=arrtype)
 			trash+=(xb3,)
-			pv_regmesh3d(mesh_name[index],xb2,xb1,xb3,mesh['xb2'].unit,mesh['xb1'].unit,mesh['xb3'].unit)
+			if swapXY:
+				pv_regmesh3d(mesh_name[index],xb2,xb1,xb3,mesh['xb2'].unit,mesh['xb1'].unit,mesh['xb3'].unit)
+			else:
+				pv_regmesh3d(mesh_name[index],xb1,xb2,xb3,mesh['xb1'].unit,mesh['xb2'].unit,mesh['xb3'].unit)
 			mesh_nodes += (shape(mesh['xb1'].value)[0]*shape(mesh['xb2'].value)[1]*shape(mesh['xb3'].value)[2],)
 			mesh_cells += ((shape(mesh['xb1'].value)[0]-1)*(shape(mesh['xb2'].value)[1]-1)*(shape(mesh['xb3'].value)[2]-1),)
 			mesh_step += (steps,)
@@ -210,8 +216,12 @@ def simulate(*args, **kwargs):
 			box2 = box2[id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
 			box3 = box3[id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
 			box=np.empty(np.size(box1)+np.size(box2)+np.size(box3), order='F', dtype=arrtype)
-			box[0::3] = np.transpose(box1,(2,0,1)).flatten()
-			box[1::3] = np.transpose(box2,(2,0,1)).flatten()
+			if swapXY:
+				box[0::3] = np.transpose(box2,(2,0,1)).flatten()
+				box[1::3] = np.transpose(box1,(2,0,1)).flatten()
+			else:
+				box[0::3] = np.transpose(box1,(2,1,0)).flatten()
+				box[1::3] = np.transpose(box2,(2,1,0)).flatten()
 			box[2::3] = np.transpose(box3,(2,0,1)).flatten()
 			trash+=(box,)
 			pv_regvector(meshes[mesh_id0[index]]['box_id'].value+'.vect,'+key[0].name+','+key[1].name+','+key[2].name,mesh_name[mesh_id0[index]],box,'vect,'+key[0].unit+','+key[1].unit+','+key[2].unit)
@@ -220,7 +230,10 @@ def simulate(*args, **kwargs):
 				box=np.array(key.value.T, order='F', dtype=arrtype)
 				trash+=(box,)
 			elif dim[mesh_id0[index]] == 3:
-				box=np.array(np.transpose(key.value[id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]],(1,0,2)), order='F', dtype=arrtype)
+				if swapXY:
+					box=np.array(np.transpose(key.value[id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]],(1,0,2)), order='F', dtype=arrtype)
+				else:
+					box=np.array(np.transpose(key.value[id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]],(0,1,2)), order='F', dtype=arrtype)
 				trash+=(box,)
 			print(meshes[mesh_id0[index]]['box_id'].value+'.'+key.name)
 			print(mesh_name[mesh_id0[index]])
