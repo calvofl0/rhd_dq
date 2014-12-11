@@ -1828,7 +1828,7 @@ dxds(:,:,k0) = 1.5*dkds(:,:,k1) - (max(s4,0.)+min(s5,0.))
 !
 ! INTERIOR
 !
-do i3=n3-1,2,-1
+do i3=n3-1,m3+1,-1
   k0 = i3
   k1 = i3
   k2 = i3-1
@@ -1841,9 +1841,9 @@ end do
 !
 ! BOTTOM
 !
-  dxds(:,:,1) = 1.5*dkds(:,:,1) - 0.5*dxds(:,:,2)
+  dxds(:,:,m3) = 1.5*dkds(:,:,m3) - 0.5*dxds(:,:,m3+1)
 !
-do i3=n3-1,1,-1
+do i3=n3-1,m3,-1
   dq_tau(:,:,i3) = dq_tau(:,:,i3+1) + dz(i3)*( 0.5*( &
     ( dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) + dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) ) &
     ) ) + dz(i3)*( dxds(:,:,i3+1)-dxds(:,:,i3) )/12.0

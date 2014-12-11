@@ -102,7 +102,7 @@ pybold: pybold.f90
 	@rm -rf $(OUTLIB)
 	@$(MAKE) FPIC=$(FPIC) PYBOLD=-DPYBOLD
 	#f2py -h pybold.pyf $<
-	f2py -m _pybold -c --f90exec=$(FC) --f90flags="$(FCFLAGS) -DPYBOLD" rhd_dq_module.a $(LDFLAGS) _pybold.pyf $<
+	f2py -m _pybold -c --f90exec=$(FC) --f90flags="$(FCFLAGS) -DPYBOLD" --f77flags="$(FCFLAGS) -DPYBOLD" rhd_dq_module.a $(LDFLAGS) _pybold.pyf $<
 	rm -rf *.o
 	rm -rf *.mod
 	rm -rf "$(OUT)"
