@@ -1200,6 +1200,17 @@ class uio_struct(dict):
 	      first call to next will load the first snapshot to
 	      uio_struct variable.
 		"""
+		keys = [key for key in self.viewkeys()]
+		for key in keys:
+			if key == '_parent': continue
+			if (self.__class__ ==
+			   self[key].__class__) :
+				if key != 'head' and key != 'dq':
+					self[key].record('delete')
+					del(self[key])
+			elif (self[key].__class__ ==
+			   uio_struct_item) :
+				del(self[key])
 		read_next(self.record)
 		if hasattr(self, 'dq') and uio_reader_module.r_imodel.item() >= 0 :
 			self.record('delete','dq')
@@ -1317,8 +1328,8 @@ class uio_struct(dict):
 			version=self.head['version'].value
 			history=self.head['history'].value
 		else :
-			version=''
-			history=np.array([''])
+			version='Unknown version'
+			history=np.array(['Unknown past history'])
 		if hasattr(self, 'time_out_mean_last') :
 			toml = self['time_out_mean_last'].value
 		else :
@@ -1328,39 +1339,39 @@ class uio_struct(dict):
 		else :
 			tofl = 0.0
 		history=np.array([list(h.ljust(80)) for h in history])
-		print(filename)
-		print(np.shape(xb1))
-		print(np.shape(xb2))
-		print(np.shape(xb3))
-		print(np.shape(xc1))
-		print(np.shape(xc2))
-		print(np.shape(xc3))
-		print(np.shape(v1))
-		print(np.shape(v2))
-		print(np.shape(v3))
-		print(np.shape(rho))
-		print(np.shape(ei))
-		print(Bb_flag)
-		print(np.shape(Bb1))
-		print(np.shape(Bb2))
-		print(np.shape(Bb3))
-		print(B1_unit)
-		print(B2_unit)
-		print(B3_unit)
-		print(self['dtime'].value)
-		print(self['modelitime'].value)
-		print(self['modeltime'].value)
-		print(str(time_db))
-		print(history)
-		print(version)
-		print(str(toml))
-		print(str(tofl))
-		print(str(m1))
-		print(str(n1))
-		print(str(m2))
-		print(str(n2))
-		print(str(m3))
-		print(str(n3))
+		#print('Filename: '+filename)
+		#print('xb1 shape: '+np.shape(xb1))
+		#print('xb2 shape: '+np.shape(xb2))
+		#print('xb3 shape: '+np.shape(xb3))
+		#print('xc1 shape: '+np.shape(xc1))
+		#print('xc2 shape: '+np.shape(xc2))
+		#print('xc3 shape: '+np.shape(xc3))
+		#print('v1 shape: '+np.shape(v1))
+		#print('v2 shape: '+np.shape(v2))
+		#print('v3 shape: '+np.shape(v3))
+		#print('rho shape: '+np.shape(rho))
+		#print('ei shape: '+np.shape(ei))
+		#print('Bb_flag: '+Bb_flag)
+		#print('Bb1 shape: '+np.shape(Bb1))
+		#print('Bb2 shape: '+np.shape(Bb2))
+		#print('Bb3 shape: '+np.shape(Bb3))
+		#print('B1_unit: '+B1_unit)
+		#print('B2_unit: '+B2_unit)
+		#print('B3_unit: '+B3_unit)
+		#print('dtime: '+self['dtime'].value)
+		#print('modelitime: '+self['modelitime'].value)
+		#print('modeltime: '+self['modeltime'].value)
+		#print('time_db: '+str(time_db))
+		#print('history: '+history)
+		#print('version: '+version)
+		#print('toml: '+str(toml))
+		#print('tofl: '+str(tofl))
+		#print('m1: '+str(m1))
+		#print('n1: '+str(n1))
+		#print('m2: '+str(m2))
+		#print('n2: '+str(n2))
+		#print('m3: '+str(m3))
+		#print('n3: '+str(n3))
 		write_model(filename, xb1, xb2, xb3, xc1, xc2, xc3, v1, v2, v3, rho, ei, Bb_flag, Bb1, Bb2, Bb3, B1_unit, B2_unit, B3_unit, self['dtime'].value, self['modelitime'].value, self['modeltime'].value, time_db, history, version, toml, tofl, m1, n1, m2, n2, m3, n3)
 	# PMD routines
 	def pmd_parse(self, pmd_handle):
