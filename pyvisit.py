@@ -219,10 +219,11 @@ def simulate(*args, **kwargs):
 			if swapXY:
 				box[0::3] = np.transpose(box2,(2,0,1)).flatten()
 				box[1::3] = np.transpose(box1,(2,0,1)).flatten()
+				box[2::3] = np.transpose(box3,(2,0,1)).flatten()
 			else:
 				box[0::3] = np.transpose(box1,(2,1,0)).flatten()
 				box[1::3] = np.transpose(box2,(2,1,0)).flatten()
-			box[2::3] = np.transpose(box3,(2,0,1)).flatten()
+				box[2::3] = np.transpose(box3,(2,1,0)).flatten()
 			trash+=(box,)
 			pv_regvector(meshes[mesh_id0[index]]['box_id'].value+'.vect,'+key[0].name+','+key[1].name+','+key[2].name,mesh_name[mesh_id0[index]],box,'vect,'+key[0].unit+','+key[1].unit+','+key[2].unit)
 		elif size(key.value)==mesh_cells[mesh_id0[index]]:

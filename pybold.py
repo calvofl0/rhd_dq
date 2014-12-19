@@ -187,7 +187,7 @@ R	= kB*NA
 alpha	= 7.2973525698e-3
 e	= np.sqrt(hbar*alpha*c)
 G	= 6.67384e-8
-amu	= 1.660538921e-27
+amu	= 1.660538921e-24
 
 # SI conversion
 si	= namespace()
@@ -220,6 +220,79 @@ sun.I	= sun.L/(2*pi*sun.R)**3
 sun.rhoc= 1.622e2
 sun.rhom= 1.408
 sun.D	= 1.496e13
+sun.mu	= 0.594
+
+# Level function
+# Given an array arr, some axis ax and a level l, returns an array
+# privated of axis ax, whose elements are the coordinate on ax at which
+# arr is equal to l
+# Every column parametrized along axis ax must be strictly monotonic
+
+def level1D(col, l, t=None, rounding=False):
+	"""
+	Given a monotonic vector 'col', returns the index corresponding
+	to value 'l' when t is an integer type.
+
+	If t is a floating point type, a linear interpolation is computed
+	to return a "floating point index" of level l.
+
+	When type is integer, if rounding is True, the chosen index is the
+	closest to level l (typically level l is between two indices).
+	"""
+	if not t: t=np.array(col, copy=False).dtype.type
+	ext=(col<=l)
+	ext=np.logical_or(ext[:-1], ext[1:])
+	ext=np.where(ext)
+	if len(ext)!=1: return np.nan
+	ext=ext[0][0]
+	if rounding:
+		return t(ext)+t(round((t(1)-col[ext])/(col[ext+1]-col[ext])))
+	return t(ext)+t((t(1)-col[ext])/(col[ext+1]-col[ext]))
+
+def level(arr, l, ax=2, t=None, rounding=False): 
+	"""
+	As level 1D but accepts general arrays and level is taken is some
+	specified axis.
+	"""
+	return np.apply_along_axis(level1D, ax, arr, l, t, rounding)
+
+def varAtMeanLevel(var, arr, l, ax=2):
+	"""
+	Returns the values of var in axis ax corresponding to the position in
+	which arr is in average of level l.
+	"""
+	isosurf=level(arr,l,ax)
+	average=int(round(np.mean(isosurf)))
+	average=average*np.ones_like(isosurf, dtype=int)
+	nx,ny=np.shape(isosurf)
+	indices=list(np.meshgrid(range(nx),range(ny)))+[average]
+	lookup=[1,0]
+	lookup.insert(ax,2)
+	indices=tuple([indices[i] for i in lookup])
+	return var[indices]
+
+def varAtLevel(var, arr, l, ax=2):
+	"""
+	Returns the values of var in axis ax corresponding to the position in
+	which arr is of level l, using the level function to compute
+	isosurface.
+	"""
+	isosurf=level(arr,l,ax,t=int,rounding=True)
+	nx,ny=np.shape(isosurf)
+	indices=list(np.meshgrid(range(nx),range(ny)))+[isosurf]
+	lookup=[1,0]
+	lookup.insert(ax,2)
+	indices=tuple([indices[i] for i in lookup])
+	return var[indices]
+
+def local_minima(arr, threshold=.2):
+	"""
+	Returns indices of local minimal of a 2D array
+	"""
+	import scipy.ndimage as ndimage
+	import scipy.ndimage.filters as filters
+	data_max=(filters.maximum_filter(arr, size=3)==arr)
+	# To be continued...
 
 class uio_struct_item(object):
 	__slots__ = ['name', 'desc', 'unit', 'value', 'self', '__link', 'record', '_parent']
