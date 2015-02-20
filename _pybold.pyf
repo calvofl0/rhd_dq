@@ -199,7 +199,7 @@ python module _pybold ! in
             use pyread__user__routines
             external uio_data_reg
         end subroutine read_next
-        subroutine write_model(modelfile,xb1,xb2,xb3,xc1,xc2,xc3,v1,v2,v3,rho,ei,Bb_flag,Bb1,Bb2,Bb3,B1_unit,B2_unit,B3_unit,dtime,itime,time,time_db,history,version,time_out_mean_last,time_out_full_last,m1,n1,m2,n2,m3,n3) ! in :pybold:pybold.f90
+        subroutine write_model(modelfile,xb1,xb2,xb3,xc1,xc2,xc3,v1,v2,v3,rho,ei,Bb_flag,Bb1,Bb2,Bb3,B1_unit,B2_unit,B3_unit,dtime,itime,time,time_db,description,history,version,time_out_mean_last,time_out_full_last,m1,n1,m2,n2,m3,n3) ! in :pybold:pybold.f90
             use rhd_box_module
             use tabinter_coeff_module
             use uio_base_module
@@ -227,6 +227,7 @@ python module _pybold ! in
             real intent(in) :: time_out_full_last
             character, dimension(:,:),intent(in) :: history
             character(len=80) intent(in) :: version
+            character(len=80) intent(in) :: description
             character(len=80) intent(in) :: B1_unit
             character(len=80) intent(in) :: B2_unit
             character(len=80) intent(in) :: B3_unit

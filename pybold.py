@@ -1379,7 +1379,7 @@ class uio_struct(dict):
 			B3_unit=self.z['bb3'].unit
 			boxes += ['Bb1', 'Bb2', 'Bb3']
 		else :
-			Bb1=np.empty((0,0,0),dtype=np.float32)
+			Bb1=np.empty((0,0,0),dtype=np.float32,order='F')
 			Bb2=Bb1
 			Bb3=Bb1
 			B1_unit=''
@@ -1398,9 +1398,11 @@ class uio_struct(dict):
 			time_db=self.z['time_db'].value
 		else: time_db=self['modeltime'].value
 		if hasattr(self, 'head'):
+			description=self.head['description'].value
 			version=self.head['version'].value
 			history=self.head['history'].value
 		else :
+			description=''
 			version='Unknown version'
 			history=np.array(['Unknown past history'])
 		if hasattr(self, 'time_out_mean_last') :
@@ -1445,7 +1447,7 @@ class uio_struct(dict):
 		#print('n2: '+str(n2))
 		#print('m3: '+str(m3))
 		#print('n3: '+str(n3))
-		write_model(filename, xb1, xb2, xb3, xc1, xc2, xc3, v1, v2, v3, rho, ei, Bb_flag, Bb1, Bb2, Bb3, B1_unit, B2_unit, B3_unit, self['dtime'].value, self['modelitime'].value, self['modeltime'].value, time_db, history, version, toml, tofl, m1, n1, m2, n2, m3, n3)
+		write_model(filename, xb1, xb2, xb3, xc1, xc2, xc3, v1, v2, v3, rho, ei, Bb_flag, Bb1, Bb2, Bb3, B1_unit, B2_unit, B3_unit, self['dtime'].value, self['modelitime'].value, self['modeltime'].value, time_db, description, history, version, toml, tofl, m1, n1, m2, n2, m3, n3)
 	# PMD routines
 	def pmd_parse(self, pmd_handle):
 		unit			= pmd_handle[0]

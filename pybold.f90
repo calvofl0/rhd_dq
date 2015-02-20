@@ -264,8 +264,9 @@ end subroutine get_dq
 subroutine write_model(modelfile, xb1, xb2, xb3, xc1, xc2, xc3, &
                        v1, v2, v3, rho, ei, Bb_flag, Bb1, Bb2, Bb3, &
                        B1_unit, B2_unit, B3_unit, dtime, itime, time, &
-                       time_db, history, version, time_out_mean_last, &
-                       time_out_full_last, m1, n1, m2, n2, m3, n3)
+                       time_db, description, history, version, &
+                       time_out_mean_last, time_out_full_last, &
+                       m1, n1, m2, n2, m3, n3)
 !use const_module
 use rhd_gl_module
 use rhd_box_module
@@ -288,14 +289,15 @@ real,                       intent(in)  :: dtime, time, &
 real(kind=kind(0.0D+00)),   intent(in)  :: time_db
 character, dimension(:,:), &
                             intent(in)  :: history
-character(len=80),          intent(in)  :: version, B1_unit, B2_unit, B3_unit
+character(len=80),          intent(in)  :: version, description, &
+                                           B1_unit, B2_unit, B3_unit
 logical,                    intent(in)  :: Bb_flag
 !
 ! --- Local variables ---
 type(box_type)                          :: box
 character(len=80)                       :: date_end
 character(len=80), dimension(nhismax)   :: history_in, history_end
-character(len=80), dimension(1)         :: description
+character(len=80), dimension(1)         :: description_end
 integer                                 :: ncbox, nhis_in, nhis_end, nchars, &
                                            i, j
 !
@@ -362,9 +364,13 @@ else
   nhis_end=nhis_in
 endif
 nhis_end=nhis_end+1
-history_end(nhis_end)='Saved box with Pybold: ' // trim(date_end)
+history_end(nhis_end)='Box saved with pybold: ' // trim(date_end)
 !
-description=(/'Pybold-generated RHD-simulation model snapshot'/)
+if (trim(description) == '') then
+  description_end=(/'Pybold-generated RHD-simulation model snapshot'/)
+else
+  description_end(1) = description
+endif
 !print*, 'open,model,box,endmo,close', ncbox, dtime, &
 !                  time_out_full_last, &
 !                  time_out_mean_last, modelfile, &
@@ -375,8 +381,8 @@ call rhd_box_Write('open,model,box,endmo,close', ncbox, box=box, dtime=dtime, &
                   time_out_full_last=time_out_full_last, &
                   time_out_mean_last=time_out_mean_last, file=modelfile, &
                   form='unformatted', conv='ieee_4', ndes=1, &
-                  description=description, nhis=nhis_end, history=history_end, &
-                  version=trim(version))
+                  description=description_end, nhis=nhis_end, &
+                  history=history_end, version=trim(version))
 !
 ! --- Open file for writing in uio-form ---
 !call rhd_box_WrData('open', gl%nc_p, ncbox, file=modelfile, &
