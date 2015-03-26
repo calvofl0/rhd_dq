@@ -271,19 +271,34 @@ def varAtMeanLevel(var, arr, l, ax=2):
 	indices=tuple([indices[i] for i in lookup])
 	return var[indices]
 
-def varAtLevel(var, arr, l, ax=2):
+def varAtLevel(var, arr, l, ax=2, interpolate=True):
 	"""
 	Returns the values of var in axis ax corresponding to the position in
 	which arr is of level l, using the level function to compute
 	isosurface.
+
+	Values of var are linearly interpolated unless interpolate is set to
+	False.
 	"""
-	isosurf=level(arr,l,ax,t=int,rounding=True)
+	if not interpolate:
+		#isosurf=level(arr,l,ax,t=int,rounding=True)
+		isosurf=level(arr,l,ax).astype(int)
+	else:
+		fisosurf=level(arr,l,ax)
+		frac=fisosurf%1.
+		isosurf=(fisosurf-frac).astype(int)
 	nx,ny=np.shape(isosurf)
 	indices=list(np.meshgrid(range(nx),range(ny)))+[isosurf]
+	if interpolate:
+		indicesR=list(np.meshgrid(range(nx),range(ny)))+[isosurf+1]
 	lookup=[1,0]
 	lookup.insert(ax,2)
 	indices=tuple([indices[i] for i in lookup])
-	return var[indices]
+	if not interpolate:
+		return var[indices]
+	else:
+		indicesR=tuple([indicesR[i] for i in lookup])
+		return (1.-frac)*var[indices]+frac*var[indicesR]
 
 def local_minima(arr, threshold=.2):
 	"""
