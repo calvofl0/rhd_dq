@@ -876,7 +876,7 @@ if(present(Bc1).or.present(Bc2).or. &
    present(Babs).or.present(B2).or. &
    present(ca).or.present(csca).or. &
    present(j1).or.present(j2).or.present(j3).or. &
-   present(beta).or.present(divB)) then
+   present(jabs).or.present(beta).or.present(divB)) then
   needB=1
 endif
 if(present(tau)) then
@@ -1812,7 +1812,11 @@ allocate(s4(m1:n1,m2:n2))
 allocate(s5(m1:n1,m2:n2))
 allocate(dz(m3:n3))
 dz = dq_xb3(m3+1:n3+1)-dq_xb3(m3:n3)
-dq_tau(:,:,n3) = dq_kappa(:,:,n3)*dq_rho(:,:,n3)*dq_C_radHtautop
+if (dq_C_radHtautop>=0) then
+  dq_tau(:,:,n3) = dq_kappa(:,:,n3)*dq_rho(:,:,n3)*dq_C_radHtautop
+else
+  dq_tau(:,:,n3) = -dq_C_radHtautop*dq_kappa(:,:,n3)*dq_P(:,:,n3)/dq_grav
+endif
 do i3=m3,k1
   dkds(:,:,i3) = -( dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) - &
                     dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) ) / dz(i3)
