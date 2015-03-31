@@ -1675,6 +1675,9 @@ endif
 if (.not.present(j3).and.allocated(dq_j3)) then
   deallocate(dq_j3)
 endif
+if (.not.present(jabs).and.allocated(dq_jabs)) then
+  deallocate(dq_jabs)
+endif
 if (.not.present(kappa).and.allocated(dq_kappa)) then
   deallocate(dq_kappa)
 endif
