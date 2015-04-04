@@ -6,9 +6,10 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 import xmlrpclib
 import cPickle as pickle
 import zlib
+from socket import gethostname
 
 class Server(Thread):
-	def __init__(self, host='localhost', port=3000):
+	def __init__(self, host=gethostname(), port=3000):
 		Thread.__init__(self)
 		self._host = host
 		self._port = port
@@ -22,10 +23,13 @@ class Server(Thread):
 		self._server.register_function(lambda:True,'ping')
 		def get_var(var_str):
 			d = self._dict
-			exec 'q = d.'+var_str in locals()
-			var=q
-			if hasattr(var, 'value'): var = var.value
-			cstr = zlib.compress(pickle.dumps(var, pickle.HIGHEST_PROTOCOL),9)
+			if var_str == '':
+				cstr = zlib.compress(pickle.dumps(d, pickle.HIGHEST_PROTOCOL),9)
+			else:
+				exec 'q = d.'+var_str in locals()
+				var=q
+				if hasattr(var, 'value'): var = var.value
+				cstr = zlib.compress(pickle.dumps(var, pickle.HIGHEST_PROTOCOL),9)
 			return xmlrpclib.Binary(cstr)
 		self._server.register_function(get_var,'get')
 		self._running = True
@@ -38,10 +42,10 @@ class Server(Thread):
 		proxy.ping()
 
 class Client(object):
-	def __init__(self, host='localhost', port=3000):
+	def __init__(self, host=gethostname(), port=3000):
 		self._host = host
 		self._port = port
 		self._proxy = xmlrpclib.ServerProxy('http://'+self._host+':'+str(self._port)+'/')
-	def get(self, var_str):
+	def get(self, var_str=''):
 		stream = self._proxy.get(var_str)
 		return pickle.loads(zlib.decompress(stream.data))
