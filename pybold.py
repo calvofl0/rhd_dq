@@ -241,13 +241,17 @@ def level1D(col, l, t=None, rounding=False):
 	"""
 	if not t: t=np.array(col, copy=False).dtype.type
 	ext=(col<=l)
-	ext=np.logical_or(ext[:-1], ext[1:])
+	ext=np.logical_xor(ext[:-1], ext[1:])
 	ext=np.where(ext)
 	if len(ext)!=1: return np.nan
 	ext=ext[0][0]
+	if col[0]>col[-1]:
+		ext+=1
+		delta=col[ext]-col[ext-1]
+	else: delta = col[ext+1]-col[ext]
 	if rounding:
-		return t(ext)+t(round((t(1)-col[ext])/(col[ext+1]-col[ext])))
-	return t(ext)+t((t(1)-col[ext])/(col[ext+1]-col[ext]))
+		return t(ext)+t(round((t(l)-col[ext])/delta))
+	return t(ext)+t((t(l)-col[ext])/delta)
 
 def level(arr, l, ax=2, t=None, rounding=False): 
 	"""
