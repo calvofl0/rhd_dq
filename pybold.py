@@ -241,17 +241,13 @@ def level1D(col, l, t=None, rounding=False):
 	"""
 	if not t: t=np.array(col, copy=False).dtype.type
 	ext=(col<=l)
-	ext=np.logical_xor(ext[:-1], ext[1:])
+	ext=np.logical_or(ext[:-1], ext[1:])
 	ext=np.where(ext)
 	if len(ext)!=1: return np.nan
 	ext=ext[0][0]
-	if col[0]>col[-1]:
-		ext+=1
-		delta=col[ext]-col[ext-1]
-	else: delta = col[ext+1]-col[ext]
 	if rounding:
-		return t(ext)+t(round((t(l)-col[ext])/delta))
-	return t(ext)+t((t(l)-col[ext])/delta)
+		return t(ext)+t(round((t(1)-col[ext])/(col[ext+1]-col[ext])))
+	return t(ext)+t((t(1)-col[ext])/(col[ext+1]-col[ext]))
 
 def level(arr, l, ax=2, t=None, rounding=False): 
 	"""
@@ -312,6 +308,21 @@ def local_minima(arr, threshold=.2):
 	import scipy.ndimage.filters as filters
 	data_max=(filters.maximum_filter(arr, size=3)==arr)
 	# To be continued...
+
+def extend_periodically(vector, period, direction):
+	l = len(vector)
+	out = np.copy(vector)
+	if direction>0:
+		for i in range(l-1):
+			if vector[i+1]<vector[i]:
+				out[i+1:]+=period
+				break
+	elif direction<0:
+		for i in range(l-1,0,-1):
+			if vector[i-1]>vector[i]:
+				out[:i]-=period
+				break
+	return out
 
 class uio_struct_item(object):
 	__slots__ = ['name', 'desc', 'unit', 'value', 'self', '__link', 'record', '_parent']
@@ -1333,27 +1344,59 @@ class uio_struct(dict):
 	                if key=='max_sz': max_sz=kwargs[key]
 	                elif key=='box': box=kwargs[key]
 	                elif key=='centre': centre=kwargs[key]
+	                elif key=='dtype': arrtype=kwargs[key]
 	        if not 'max_sz' in locals(): max_sz=(-1,-1,-1)
 	        if not 'box' in locals(): box=(-1,-1,-1)
 	        if not 'centre' in locals(): centre=(-1,-1,-1)
+	        if not 'dtype' in locals(): arrtype=np.float32
 
+		nX = np.shape(self.z['xb1'].value)[0]
+		nY = np.shape(self.z['xb2'].value)[1]
+		nZ = np.shape(self.z['xb3'].value)[2]
+		periodX = self.z['xb1'].value[-1,0,0]-self.z['xb1'].value[0,0,0]
+		periodY = self.z['xb2'].value[0,-1,0]-self.z['xb2'].value[0,0,0]
                 id_min0=np.array([0,0,0])
-                id_max0=np.array([np.shape(self.z['xb1'].value)[0],np.shape(self.z['xb2'].value)[1],np.shape(self.z['xb3'].value)[2]])
+                id_max0=np.array([nX, nY, nZ])
                 id_min=id_min0.copy()
                 id_max=id_max0.copy()
                 steps=np.array([1,1,1])
+		periodicity_flag = False
+		periodicity_dir = [0,0]
                 for i in range(3):
                         if centre[i]<0 and box[i]>=0 : centre[i]=0
                         if centre[i]>=0 :
                                 if box[i]>=0 :
-                                        id_min[i]=max(id_min0[i],int(np.ceil(centre[i]-box[i]/2.)))
-                                        id_max[i]=min(id_max0[i],1+int(np.floor(centre[i]+box[i]/2.)))
+                                        #id_min[i]=max(id_min0[i],int(np.ceil(centre[i]-box[i]/2.)))
+                                        #id_max[i]=min(id_max0[i],1+int(np.floor(centre[i]+box[i]/2.)))
+					if i < 2:
+	                                        id_min[i]=int(np.ceil(centre[i]-box[i]/2.))-1
+	                                        id_max[i]=int(np.ceil(centre[i]+box[i]/2.))
+						if ( id_min0[i] > int(np.ceil(centre[i]-box[i]/2.))-1 ):
+							periodicity_flag = True
+							periodicity_dir[i] = -1
+						if ( id_max0[i] < int(np.ceil(centre[i]+box[i]/2.)) ):
+							periodicity_flag = True
+							periodicity_dir[i] = 1
+					else:
+	                                        id_min[i]=max(id_min0[i],int(np.ceil(centre[i]-box[i]/2.))-1)
+	                                        id_max[i]=min(id_max0[i],int(np.ceil(centre[i]+box[i]/2.)))
                                         if max_sz[i]>=0 :
                                                 steps[i]=max(1,int(np.floor((id_max[i]-id_min[i]+1)/max_sz[i])))
-                                else :
-                                        if max_sz[i]>=0 :
-                                                id_min[i]=max(id_min[i],int(np.ceil(centre[i]-max_sz[i]/2.)))
-                                                id_max[i]=min(id_max[i],1+int(np.floor(centre[i]+max_sz[i]/2.)))
+                                elif max_sz[i]>=0 :
+                                        #id_min[i]=max(id_min[i],int(np.ceil(centre[i]-max_sz[i]/2.)))
+                                        #id_max[i]=min(id_max[i],1+int(np.floor(centre[i]+max_sz[i]/2.)))
+					if i < 2:
+                                                id_min[i]=int(np.ceil(centre[i]-max_sz[i]/2.))-1
+                                                id_max[i]=int(np.ceil(centre[i]+max_sz[i]/2.))
+						if ( id_min0[i] > int(np.ceil(centre[i]-max_sz[i]/2.))-1 ):
+							periodicity_flag = True
+							periodicity_dir[i] = -1
+						if ( id_max0[i] < int(np.ceil(centre[i]+max_sz[i]/2.)) ):
+							periodicity_flag = True
+							periodicity_dir[i] = 1
+					else:
+                                                id_min[i]=max(id_min0[i],int(np.ceil(centre[i]-max_sz[i]/2.))-1)
+                                                id_max[i]=min(id_max0[i],int(np.ceil(centre[i]+max_sz[i]/2.)))
                         else :
                                 if max_sz[i]>=0 :
                                         steps[i]=max(1,int(np.floor((id_max[i]-id_min[i]+1)/max_sz[i])))
@@ -1363,26 +1406,43 @@ class uio_struct(dict):
 		n1=id_max[0]-1
 		n2=id_max[1]-1
 		n3=id_max[2]-1
+		meshX, meshY, meshZ = np.mgrid[id_min[0]:id_max[0]:steps[0],id_min[1]:id_max[1]:steps[1],id_min[2]:id_max[2]:steps[2]]
+		#meshX = meshX.T
+		#meshY = meshY.T
+		#meshZ = meshZ.T
 		if hasattr(self.z, 'bb1'): Bb_flag = True
 		else : Bb_flag = False
-                if steps[0]==1 :
-                        xb1=np.asfortranarray(self.z['xb1'].value)
-                        xc1=np.asfortranarray(self.z['xc1'].value)
+		if steps[0]==1 and not periodicity_flag :
+			xb1=np.asfortranarray(self.z['xb1'].value[id_min[0]:id_max[0],:,:])
+			xc1=np.asfortranarray(self.z['xc1'].value[id_min[0]:id_max[0]-1,:,:])
                 else :
-                        xb1=np.array(self.z['xb1'].value[id_min[0]:id_max[0]:steps[0],:,:],order='F', dtype=arrtype)
-                        xc1=np.array(self.z['xc1'].value[id_min[0]:id_max[0]-1:steps[0],:,:],order='F', dtype=arrtype)
-                if steps[1]==1 :
-                        xb2=np.asfortranarray(self.z['xb2'].value)
-                        xc2=np.asfortranarray(self.z['xc2'].value)
+                        #xb1=np.array(self.z['xb1'].value[id_min[0]:id_max[0]:steps[0],:,:],order='F', dtype=arrtype)
+                        #xc1=np.array(self.z['xc1'].value[id_min[0]:id_max[0]-1:steps[0],:,:],order='F', dtype=arrtype)
+			rangeX = np.arange(id_min[0],id_max[0],steps[0])%(nX-1)
+			xb1=np.array(self.z['xb1'].value[rangeX,:,:],order='F', dtype=arrtype)
+			xc1=np.array(self.z['xc1'].value[rangeX[:-1],:,:],order='F', dtype=arrtype)
+			xb1 = extend_periodically(xb1,periodX,periodicity_dir[0])
+			xc1 = extend_periodically(xc1,periodX,periodicity_dir[0])
+                if steps[1]==1 and not periodicity_flag :
+			xb2=np.asfortranarray(self.z['xb2'].value[:,id_min[1]:id_max[1],:])
+			xc2=np.asfortranarray(self.z['xc2'].value[:,id_min[1]:id_max[1]-1,:])
                 else :  
-                        xb2=np.array(self.z['xb2'].value[:,id_min[1]:id_max[1]:steps[1],:],order='F', dtype=arrtype)
-                        xc2=np.array(self.z['xc2'].value[:,id_min[1]:id_max[1]-1:steps[1],:],order='F', dtype=arrtype)
-                if steps[2]==1 :
-                        xb3=np.asfortranarray(self.z['xb3'].value)
-                        xc3=np.asfortranarray(self.z['xc3'].value)
+                        #xb2=np.array(self.z['xb2'].value[:,id_min[1]:id_max[1]:steps[1],:],order='F', dtype=arrtype)
+                        #xc2=np.array(self.z['xc2'].value[:,id_min[1]:id_max[1]-1:steps[1],:],order='F', dtype=arrtype)
+			rangeY = np.arange(id_min[1],id_max[1],steps[1])%(nY-1)
+			xb2=np.array(self.z['xb2'].value[:,rangeY,:],order='F', dtype=arrtype)
+			xc2=np.array(self.z['xc2'].value[:,rangeY[:-1],:],order='F', dtype=arrtype)
+			xb2 = extend_periodically(xb2,periodY,periodicity_dir[1])
+			xc2 = extend_periodically(xc2,periodY,periodicity_dir[1])
+                if steps[2]==1 and not periodicity_flag :
+			xb3=np.asfortranarray(self.z['xb3'].value[:,:,id_min[2]:id_max[2]])
+			xc3=np.asfortranarray(self.z['xc3'].value[:,:,id_min[2]:id_max[2]-1])
                 else :
-                        xb3=np.array(self.z['xb3'].value[:,:,id_min[2]:id_max[2]:steps[2]],order='F', dtype=arrtype)
-                        xb3=np.array(self.z['xc3'].value[:,:,id_min[2]:id_max[2]-1:steps[2]],order='F', dtype=arrtype)
+                        #xb3=np.array(self.z['xb3'].value[:,:,id_min[2]:id_max[2]:steps[2]],order='F', dtype=arrtype)
+                        #xb3=np.array(self.z['xc3'].value[:,:,id_min[2]:id_max[2]-1:steps[2]],order='F', dtype=arrtype)
+			rangeZ = np.arange(id_min[2],id_max[2],steps[2])%(nZ-1)
+			xb3=np.array(self.z['xb3'].value[:,:,rangeZ],order='F', dtype=arrtype)
+			xc3=np.array(self.z['xc3'].value[:,:,rangeZ[:-1]],order='F', dtype=arrtype)
 		v1=self.z['v1'].value
 		v2=self.z['v2'].value
 		v3=self.z['v3'].value
@@ -1396,23 +1456,28 @@ class uio_struct(dict):
 			B1_unit=self.z['bb1'].unit
 			B2_unit=self.z['bb2'].unit
 			B3_unit=self.z['bb3'].unit
-			boxes += ['Bb1', 'Bb2', 'Bb3']
 		else :
-			Bb1=np.empty((0,0,0),dtype=np.float32,order='F')
-			Bb2=Bb1
-			Bb3=Bb1
+			Bb1=np.zeros((nX,nY-1,nZ-1),dtype=arrtype,order='F')
+			Bb2=np.zeros((nX-1,nY,nZ-1),dtype=arrtype,order='F')
+			Bb3=np.zeros((nX-1,nY-1,nZ),dtype=arrtype,order='F')
 			B1_unit=''
 			B2_unit=''
 			B3_unit=''
-                if not (np.all(steps==[1,1,1])) :
+                if (not np.all(steps==[1,1,1])) :
 			m1=1
 			m2=1
 			m3=1
 			n1=id_max[0]-id_min[0]-1
 			n2=id_max[1]-id_min[1]-1
 			n3=id_max[2]-id_min[2]-1
-			for box in boxes:
-				vars()[box] = vars()[box][id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
+                #if (not np.all(steps==[1,1,1])) or periodicity_flag :
+		for box in boxes:
+			#vars()[box] = vars()[box][id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
+			quantitiy = np.array(vars()[box][(meshX%(nX-1))[:-1,:-1,:-1],(meshY%(nY-1))[:-1,:-1,:-1],(meshZ%(nZ-1))[:-1,:-1,:-1]],dtype=arrtype,order='F')
+			exec(box+'=quantitiy')
+		Bb1 = Bb1[(meshX%(nX-1))[:,:-1,:-1],(meshY%(nY-1))[:,:-1,:-1],(meshZ%(nZ-1))[:,:-1,:-1]]
+		Bb2 = Bb2[(meshX%(nX-1))[:-1,:,:-1],(meshY%(nY-1))[:-1,:,:-1],(meshZ%(nZ-1))[:-1,:,:-1]]
+		Bb3 = Bb3[(meshX%(nX-1))[:-1,:-1,:],(meshY%(nY-1))[:-1,:-1,:],(meshZ%(nZ-1))[:-1,:-1,:]]
 		if hasattr(self.z,'time_db'):
 			time_db=self.z['time_db'].value
 		else: time_db=self['modeltime'].value
@@ -1434,29 +1499,29 @@ class uio_struct(dict):
 			tofl = 0.0
 		history=np.array([list(h.ljust(80)) for h in history])
 		#print('Filename: '+filename)
-		#print('xb1 shape: '+np.shape(xb1))
-		#print('xb2 shape: '+np.shape(xb2))
-		#print('xb3 shape: '+np.shape(xb3))
-		#print('xc1 shape: '+np.shape(xc1))
-		#print('xc2 shape: '+np.shape(xc2))
-		#print('xc3 shape: '+np.shape(xc3))
-		#print('v1 shape: '+np.shape(v1))
-		#print('v2 shape: '+np.shape(v2))
-		#print('v3 shape: '+np.shape(v3))
-		#print('rho shape: '+np.shape(rho))
-		#print('ei shape: '+np.shape(ei))
-		#print('Bb_flag: '+Bb_flag)
-		#print('Bb1 shape: '+np.shape(Bb1))
-		#print('Bb2 shape: '+np.shape(Bb2))
-		#print('Bb3 shape: '+np.shape(Bb3))
+		#print('xb1 shape: '+str(np.shape(xb1)))
+		#print('xb2 shape: '+str(np.shape(xb2)))
+		#print('xb3 shape: '+str(np.shape(xb3)))
+		#print('xc1 shape: '+str(np.shape(xc1)))
+		#print('xc2 shape: '+str(np.shape(xc2)))
+		#print('xc3 shape: '+str(np.shape(xc3)))
+		#print('v1 shape: '+str(np.shape(v1)))
+		#print('v2 shape: '+str(np.shape(v2)))
+		#print('v3 shape: '+str(np.shape(v3)))
+		#print('rho shape: '+str(np.shape(rho)))
+		#print('ei shape: '+str(np.shape(ei)))
+		#print('Bb_flag: '+str(Bb_flag))
+		#print('Bb1 shape: '+str(np.shape(Bb1)))
+		#print('Bb2 shape: '+str(np.shape(Bb2)))
+		#print('Bb3 shape: '+str(np.shape(Bb3)))
 		#print('B1_unit: '+B1_unit)
 		#print('B2_unit: '+B2_unit)
 		#print('B3_unit: '+B3_unit)
-		#print('dtime: '+self['dtime'].value)
-		#print('modelitime: '+self['modelitime'].value)
-		#print('modeltime: '+self['modeltime'].value)
+		#print('dtime: '+str(self['dtime'].value))
+		#print('modelitime: '+str(self['modelitime'].value))
+		#print('modeltime: '+str(self['modeltime'].value))
 		#print('time_db: '+str(time_db))
-		#print('history: '+history)
+		#print('history: '+str(history))
 		#print('version: '+version)
 		#print('toml: '+str(toml))
 		#print('tofl: '+str(tofl))

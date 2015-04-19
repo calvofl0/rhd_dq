@@ -280,10 +280,30 @@ implicit none
 ! --- I/O parameters ---
 character*(*),              intent(in)  :: modelfile
 integer,                    intent(in)  :: itime, m1, n1, m2, n2, m3, n3
-real, target, dimension(:), &
-                         intent(inout)  :: xb1, xb2, xb3, xc1, xc2, xc3
-real, target, dimension(:,:,:), &
-                         intent(inout)  :: v1, v2, v3, rho, ei, Bb1, Bb2, Bb3
+real, target, dimension(m1:n1+1), &
+                         intent(inout)  :: xb1
+real, target, dimension(m2:n2+1), &
+                         intent(inout)  :: xb2
+real, target, dimension(m3:n3+1), &
+                         intent(inout)  :: xb3
+real, target, dimension(m1:n1), &
+                         intent(inout)  :: xc1
+real, target, dimension(m2:n2), &
+                         intent(inout)  :: xc2
+real, target, dimension(m3:n3), &
+                         intent(inout)  :: xc3
+real, target, &
+       dimension(m1:n1,m2:n2,m3:n3), &
+                         intent(inout)  :: v1, v2, v3, rho, ei
+real, target, &
+     dimension(m1:n1+1,m2:n2,m3:n3), &
+                         intent(inout)  :: Bb1
+real, target, &
+     dimension(m1:n1,m2:n2+1,m3:n3), &
+                         intent(inout)  :: Bb2
+real, target, &
+     dimension(m1:n1,m2:n2,m3:n3+1), &
+                         intent(inout)  :: Bb3
 real,                       intent(in)  :: dtime, time, &
                                            time_out_mean_last,time_out_full_last
 real(kind=kind(0.0D+00)),   intent(in)  :: time_db

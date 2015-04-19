@@ -204,17 +204,17 @@ python module _pybold ! in
             use tabinter_coeff_module
             use uio_base_module
             character*(*) intent(in) :: modelfile
-            real, target,dimension(:),intent(inout) :: xb1
-            real, target,dimension(:),intent(inout) :: xb2
-            real, target,dimension(:),intent(inout) :: xb3
-            real, target,dimension(:),intent(inout) :: xc1
-            real, target,dimension(:),intent(inout) :: xc2
-            real, target,dimension(:),intent(inout) :: xc3
-            real, target,dimension(:,:,:),intent(inout) :: v1
-            real, target,dimension(:,:,:),intent(inout) :: v2
-            real, target,dimension(:,:,:),intent(inout) :: v3
-            real, target,dimension(:,:,:),intent(inout) :: rho
-            real, target,dimension(:,:,:),intent(inout) :: ei
+            real, target,dimension(m1:n1+1),intent(inout) :: xb1
+            real, target,dimension(m2:n2+1),intent(inout) :: xb2
+            real, target,dimension(m3:n3+1),intent(inout) :: xb3
+            real, target,dimension(m1:n1),intent(inout) :: xc1
+            real, target,dimension(m2:n2),intent(inout) :: xc2
+            real, target,dimension(m3:n3),intent(inout) :: xc3
+            real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: v1
+            real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: v2
+            real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: v3
+            real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: rho
+            real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: ei
             real, target,dimension(:,:,:),intent(inout) :: Bb1
             real, target,dimension(:,:,:),intent(inout) :: Bb2
             real, target,dimension(:,:,:),intent(inout) :: Bb3
