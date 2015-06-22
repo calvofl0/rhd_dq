@@ -648,15 +648,15 @@ if (dq_status.eq.0) then
   dq_v2 = model%v2
   allocate(dq_v3(dq_m1:dq_n1, dq_m2:dq_n2, dq_m3:dq_n3))
   dq_v3 = model%v3
-  allocate(dq_xb1(dq_m1:dq_m1+1))
+  allocate(dq_xb1(dq_m1:dq_n1+1))
   dq_xb1 = model%xb1
   tmp_array1 = (dq_xb1(dq_n1+1)-dq_xb1(dq_m1))/dq_nx
   dq_deltax = tmp_array1(1)
-  allocate(dq_xb2(dq_m2:dq_m2+1))
+  allocate(dq_xb2(dq_m2:dq_n2+1))
   dq_xb2 = model%xb2
   tmp_array1 = (dq_xb2(dq_n2+1)-dq_xb2(dq_m2))/dq_ny
   dq_deltay = tmp_array1(1)
-  allocate(dq_xb3(dq_m3:dq_m3+1))
+  allocate(dq_xb3(dq_m3:dq_n3+1))
   dq_xb3 = model%xb3
   tmp_array1 = (dq_xb3(dq_n3+1)-dq_xb3(dq_m3))/dq_nz
   dq_deltaz = tmp_array1(1)
