@@ -31,10 +31,14 @@ loaded with the load_uio function rather than directly with pybold):
 """
 
 import numpy as np
-from scipy.interpolate import griddata, interp1d
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-#import matplotlib.colors as colors
+try:
+	from scipy.interpolate import griddata, interp1d
+except ImportError: print('Warning: scipy is missing.')
+try:
+	import matplotlib.pyplot as plt
+	import matplotlib.cm as cm
+	#import matplotlib.colors as colors
+except: ImportError: print('Warning: matplotlib is missing.')
 import pybold
 import snake
 from savitzky_golay import savitzky_golay
