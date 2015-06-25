@@ -38,7 +38,7 @@ try:
 	import matplotlib.pyplot as plt
 	import matplotlib.cm as cm
 	#import matplotlib.colors as colors
-except: ImportError: print('Warning: matplotlib is missing.')
+except ImportError: print('Warning: matplotlib is missing.')
 import pybold
 import snake
 from savitzky_golay import savitzky_golay
