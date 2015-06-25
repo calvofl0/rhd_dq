@@ -31,11 +31,13 @@ loaded with the load_uio function rather than directly with pybold):
 """
 
 import numpy as np
+from scipy.interpolate import griddata, interp1d
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 #import matplotlib.colors as colors
 import pybold
 import snake
+from savitzky_golay import savitzky_golay
 
 if not '_model' in globals(): _model = pybold.uio_struct()
 if not '_modelfile' in globals(): _modelfile = None
@@ -478,7 +480,27 @@ def contrast(arr,model=None,s=None,odb=None,tau=1.,r=3):
 	contrast_local = (arr[xmean,ymean,tau1]-arr_bmean)/arr_bmean
 	return contrast_global, contrast_local
 
-def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True):
+def refine(arr, n):
+	'''
+	This function interpolates an array on a finer grid
+	'''
+	assert(type(n) is int)
+	s = np.shape(arr)
+	dim = len(s)
+	assert(dim==1 or dim==2)
+	if dim==2:
+		px, py = np.where(np.ones_like(arr))
+		data = arr[px, py]
+		w = (n*px, n*py)
+		grid_x, grid_y = np.mgrid[:n*(s[0]-1)+1,:n*(s[1]-1)+1]
+		return griddata(w, data, (grid_x, grid_y), method='linear')
+	if dim==1:
+		x = np.arange(s[0])
+		f = interp1d(x,arr)
+		return f(np.arange(n*(s[0]-1)+1)/float(n))
+
+
+def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True,rf=10):
 	'''
 	Plots vertical slices of arr at y=cst and x=cst respectively.
 	Depending on optional parameters, also plots tau=tau (=1 by
@@ -506,6 +528,9 @@ def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True)
 	sliceX=arr[np.ix_([xmean],range(sy),z)][0,:,:].T
 	vY=model.z.v2[np.ix_(range(sx),[ymean],z)][:,0,:].T
 	vX=model.z.v1[np.ix_([xmean],range(sy),z)][0,:,:].T
+	if rf > 1:	# Refine factor
+		vY = refine(vY,8)
+		vX = refine(vX,8)
 	vY=(vY>=0.)
 	vX=(vX>=0.)
 	extY=np.array([xc[0],xc[sx-1],zc[z[0]]-zc[tau1],zc[z[-1]]-zc[tau1]])
@@ -522,11 +547,28 @@ def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True)
 	ax2.imshow(sliceX, origin='bottom',alpha=1.,cmap=None, extent=extX)
 	ax1.imshow(-vY, origin='bottom',alpha=.4,cmap=cm.gray, extent=extY)
 	ax2.imshow(vX, origin='bottom',alpha=.4,cmap=cm.gray, extent=extX)
-	ax1.plot(xc[x],zc[z]-zc[tau1],'r')
-	ax2.plot(yc[y],zc[z]-zc[tau1],'r')
+	xp,yp,zp = xc[x],yc[y],zc[z]-zc[tau1]
+	if rf > 1:
+		xp,yp,zp = refine(xp,rf), refine(yp,rf), refine(zp,rf)
+		xp = savitzky_golay(xp, rf**2+1, 3)
+		yp = savitzky_golay(yp, rf**2+1, 3)
+		zp = savitzky_golay(zp, rf**2+1, 3)
+	ax1.plot(xp,zp,'r')
+	ax2.plot(yp,zp,'r')
+	#ax1.plot(xc[x],zc[z]-zc[tau1],'r')
+	#ax2.plot(yc[y],zc[z]-zc[tau1],'r')
 	if dq:
-		ax1.plot(xc,zc[tau1_level[:,ymean]]-zc[tau1],'b')
-		ax2.plot(yc,zc[tau1_level[xmean,:]]-zc[tau1],'b')
+		xp,yp,z1p,z2p = xc, yc, zc[tau1_level[:,ymean]]-zc[tau1],zc[tau1_level[xmean,:]]-zc[tau1]
+		if rf > 1:
+			xp,yp,z1p,z2p = refine(xp,rf), refine(yp,rf), refine(z1p,rf), refine(z2p,rf)
+			xp = savitzky_golay(xp, rf*(rf-1)+1, 3)
+			yp = savitzky_golay(yp, rf*(rf-1)+1, 3)
+			z1p = savitzky_golay(z1p, rf*(rf-1)+1, 3)
+			z2p = savitzky_golay(z2p, rf*(rf-1)+1, 3)
+		ax1.plot(xp,z1p,'b')
+		ax2.plot(yp,z2p,'b')
+	#	ax1.plot(xc,zc[tau1_level[:,ymean]]-zc[tau1],'b')
+	#	ax2.plot(yc,zc[tau1_level[xmean,:]]-zc[tau1],'b')
 	ax1.set_xlim((extY[0],extY[1]))
 	ax1.set_ylim((extY[2],extY[3]))
 	ax2.set_xlim((extX[0],extX[1]))
@@ -611,9 +653,9 @@ def report(ireport=None, model=None, s=None, dq=None, odb=None, tau=1., z=None, 
 	boxtext+= 'Density contrast: '+str(int(round(100*c_rho[0])))+'%, '
 	boxtext+= str(int(round(100*c_rho[1])))+'%\n'
 	boxtext+= 'Pressure contrast: '+str(int(round(100*c_p[0])))+'%, '
-	boxtext+= str(int(round(100*c_p[1])))+'%\n'
-	boxtext+= 'Acceleration ratio: '+str(int(round(100*a_ratio[0])))+'%, '
-	boxtext+= str(int(round(100*a_ratio[1])))+'%'
+	boxtext+= str(int(round(100*c_p[1])))+'%'
+	#boxtext+= 'Acceleration ratio: '+str(int(round(100*a_ratio[0])))+'%, '
+	#boxtext+= str(int(round(100*a_ratio[1])))+'%'
 	if ireport and _modelfile:
 		delta = model.z.xc1[1,:,:]-model.z.xc1[0,:,:]
 		boxtext+= '\nDiametre: '+str(int(round(diam*delta/1.e5)))+' [km]'
