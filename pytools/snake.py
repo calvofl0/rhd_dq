@@ -117,7 +117,9 @@ import numpy as np
 import scipy
 import scipy.ndimage as ndimage
 import scipy.ndimage.filters as filters
-import matplotlib.pyplot as plt
+try:
+	import matplotlib.pyplot as plt
+except ImportError: print('Warning: matplotlib is missing.')
 from flood_fill import flood_fill
 
 def find_min(data, ng_sz=3, threshold=np.Inf, time=-1):
