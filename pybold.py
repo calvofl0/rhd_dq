@@ -311,7 +311,7 @@ def local_minima(arr, threshold=.2):
 
 def extend_periodically(vector, period, direction):
 	l = len(vector)
-	out = np.copy(vector)
+	out = np.copy(vector, order='F')
 	if direction>0:
 		for i in range(l-1):
 			if vector[i+1]<vector[i]:
@@ -322,7 +322,7 @@ def extend_periodically(vector, period, direction):
 			if vector[i-1]>vector[i]:
 				out[:i]-=period
 				break
-	return out
+	return np.asfortranarray(out)
 
 class uio_struct_item(object):
 	__slots__ = ['name', 'desc', 'unit', 'value', 'self', '__link', 'record', '_parent']
@@ -1473,11 +1473,11 @@ class uio_struct(dict):
                 #if (not np.all(steps==[1,1,1])) or periodicity_flag :
 		for box in boxes:
 			#vars()[box] = vars()[box][id_min[0]:id_max[0]-1:mesh_step[mesh_id0[index]][0],id_min[1]:id_max[1]-1:mesh_step[mesh_id0[index]][1],id_min[2]:id_max[2]-1:mesh_step[mesh_id0[index]][2]]
-			quantitiy = np.array(vars()[box][(meshX%(nX-1))[:-1,:-1,:-1],(meshY%(nY-1))[:-1,:-1,:-1],(meshZ%(nZ-1))[:-1,:-1,:-1]],dtype=arrtype,order='F')
+			quantitiy = np.asfortranarray(vars()[box][(meshX%(nX-1))[:-1,:-1,:-1],(meshY%(nY-1))[:-1,:-1,:-1],(meshZ%(nZ-1))[:-1,:-1,:-1]])
 			exec(box+'=quantitiy')
-		Bb1 = Bb1[(meshX%(nX-1))[:,:-1,:-1],(meshY%(nY-1))[:,:-1,:-1],(meshZ%(nZ-1))[:,:-1,:-1]]
-		Bb2 = Bb2[(meshX%(nX-1))[:-1,:,:-1],(meshY%(nY-1))[:-1,:,:-1],(meshZ%(nZ-1))[:-1,:,:-1]]
-		Bb3 = Bb3[(meshX%(nX-1))[:-1,:-1,:],(meshY%(nY-1))[:-1,:-1,:],(meshZ%(nZ-1))[:-1,:-1,:]]
+		Bb1 = np.asfortranarray(Bb1[(meshX%(nX-1))[:,:-1,:-1],(meshY%(nY-1))[:,:-1,:-1],(meshZ%(nZ-1))[:,:-1,:-1]])
+		Bb2 = np.asfortranarray(Bb2[(meshX%(nX-1))[:-1,:,:-1],(meshY%(nY-1))[:-1,:,:-1],(meshZ%(nZ-1))[:-1,:,:-1]])
+		Bb3 = np.asfortranarray(Bb3[(meshX%(nX-1))[:-1,:-1,:],(meshY%(nY-1))[:-1,:-1,:],(meshZ%(nZ-1))[:-1,:-1,:]])
 		if hasattr(self.z,'time_db'):
 			time_db=self.z['time_db'].value
 		else: time_db=self['modeltime'].value
