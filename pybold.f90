@@ -345,6 +345,10 @@ box%n2=n2
 box%m3=m3
 box%n3=n3
 !
+box%itime=itime
+box%time=time
+box%time_db=time_db
+!
 box%xb1=>xb1(m1:n1+1)
 box%xb2=>xb2(m2:n2+1)
 box%xb3=>xb3(m3:n3+1)
