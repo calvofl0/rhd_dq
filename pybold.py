@@ -310,19 +310,21 @@ def local_minima(arr, threshold=.2):
 	# To be continued...
 
 def extend_periodically(vector, period, direction):
-	l = len(vector)
-	out = np.copy(vector, order='F')
+	s = np.shape(vector)
+	flatvect = vector.flatten()
+	l = len(flatvect)
+	out = np.array(flatvect, copy=True, order='F')
 	if direction>0:
 		for i in range(l-1):
-			if vector[i+1]<vector[i]:
+			if flatvect[i+1]<flatvect[i]:
 				out[i+1:]+=period
 				break
 	elif direction<0:
 		for i in range(l-1,0,-1):
-			if vector[i-1]>vector[i]:
+			if flatvect[i-1]>flatvect[i]:
 				out[:i]-=period
 				break
-	return np.asfortranarray(out)
+	return np.asfortranarray(out.reshape(s))
 
 class uio_struct_item(object):
 	__slots__ = ['name', 'desc', 'unit', 'value', 'self', '__link', 'record', '_parent']
