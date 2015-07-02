@@ -338,6 +338,8 @@ end do
 !                       time_out_mean_last, time_out_full_last, &
 !                       m1, n1, m2, n2, m3, n3, shape(history)
 !
+call rhd_box_Init(box)
+!
 box%m1=m1
 box%n1=n1
 box%m2=m2
