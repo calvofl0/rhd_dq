@@ -24,6 +24,7 @@ import xdrlib
 from slicingTools import vorticity
 from snake import find_min, select_disk, d2
 from analyze2d import getGranules, circleFootprint
+from analyze3d import wilson_depression, contrast
 from pybold import uio_struct, varAtLevel
 try:
 	from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -354,8 +355,8 @@ def report():
 	diam = _parameters[3]
 	delta = model.z.xc1[1,:,:]-model.z.xc1[0,:,:]
         boxtext+= '\nDiametre: '+str(int(round(diam*delta/1.e5)))+' [km]'
-	c_I = (_parameters[1], parameters[2])
+	c_I = (_parameters[1], _parameters[2])
         boxtext+= '\nIntensity contrast: '+str(int(round(100*c_I[0])))+'%, '
         boxtext+= str(int(round(100*c_I[1])))+'%'
-	sY,sX=plotv_slice(model.z.rho,model,s,dq=True,tau=tau,r=r,boxtext=boxtext,show=show)
+	sY,sX=plotv_slice(model.z.rho,model,s,dq=True,tau=tau,r=r,boxtext=boxtext,show=True)
         plt.close()
