@@ -409,7 +409,7 @@ def report():
 	Prints a report of the current nMBP together with the corresponding
 	plots.
 	'''
-	global _model, _parameters
+	global _model, _parameters, _rad
 	model = _model
 	tau = 1.
 	r = 3
@@ -423,11 +423,25 @@ def report():
 	odb=snake.select_disk(model.z.rho[:,:,tau1],(xmean,ymean),threshold=.5)
 	rot_index = np.argmin(model.z.v1[:,:,tau1][odb[0]]**2)
         xrot,yrot = odb[0][0][rot_index], odb[0][1][rot_index]
-        plt.imshow(model.z.rho[:,:,tau1],origin='bottom')
+	xc1, xc2 = model.z.xc1.flatten()/1.e5, model.z.xc2.flatten()/1.e5
+	ext = [xc1[0],xc1[-1],xc2[0],xc2[-1]]
+	#Ttau1 = pybold.varAtLevel(model.dq.T,model.dq.tau,1.)
+	rhotau1 = pybold.varAtLevel(model.z.rho,model.dq.tau,1.)
+        #plt.imshow(model.z.rho[:,:,tau1].T,origin='bottom',cmap=plt.cm.gray,extent=ext)
+        plt.imshow(rhotau1.T,origin='bottom',extent=ext)
+	plt.xlim(xc1[0],xc1[-1])
+	plt.ylim(xc2[0],xc2[-1])
+	plt.xlabel('Spatial horizontal position (X axis) [km]')
+	plt.ylabel('Spatial horizontal position (Y axis) [km]')
         oring=np.zeros_like(model.z.rho[:,:,tau1],dtype=bool)
         oring[odb[0]]=True
         plt.imshow(oring,origin='bottom',alpha=.7,interpolation='none')
-        plt.quiver(model.z.v2[:,:,tau1],model.z.v1[:,:,tau1])
+	X, Y = np.meshgrid(xc1, xc2)
+	arrfreq = 5
+	v1 = pybold.varAtLevel(model.z.v1, model.dq.tau, 1.)
+	v2 = pybold.varAtLevel(model.z.v2, model.dq.tau, 1.)
+	#plt.quiver(X[::arrfreq,::arrfreq], Y[::arrfreq,::arrfreq], model.z.v1[::arrfreq,::arrfreq,tau1].T,model.z.v2[::arrfreq,::arrfreq,tau1].T)
+	plt.quiver(X[::arrfreq,::arrfreq], Y[::arrfreq,::arrfreq], v1[::arrfreq,::arrfreq].T,v2[::arrfreq,::arrfreq].T)
 	fmt='{0: <20}'
         if _modelfile: print(fmt.format('File:')+_modelfile)
         else: print(fmt.format('File:')+'Unknown')
@@ -451,5 +465,10 @@ def report():
 	c_I = (_parameters[1], _parameters[2])
         boxtext+= '\nIntensity contrast: '+str(int(round(100*c_I[0])))+'%, '
         boxtext+= str(int(round(100*c_I[1])))+'%'
-	sY,sX=plotv_slice(model.z.rho,model,s,dq=True,tau=tau,r=r,boxtext=boxtext,show=True)
+	fig = plt.figure()
+	ax = fig.add_subplot(1,1,1)
+	ax.imshow(_rad.T, origin='bottom', cmap=plt.cm.gray)
+	circ = plt.Circle(_parameters[0], radius=50, color='r', fill=False)
+	ax.add_patch(circ)
+	sY,sX=plotv_slice(model.z.rho,model,s,dq=True,tau=tau,r=r,boxtext=boxtext,show=True,tight=False)
         plt.close()

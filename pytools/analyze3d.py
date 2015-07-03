@@ -504,7 +504,7 @@ def refine(arr, n):
 		return f(np.arange(n*(s[0]-1)+1)/float(n))
 
 
-def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True,rf=10):
+def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True,rf=10,tight=True):
 	'''
 	Plots vertical slices of arr at y=cst and x=cst respectively.
 	Depending on optional parameters, also plots tau=tau (=1 by
@@ -528,18 +528,36 @@ def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True,
 		xmean = int(round(np.mean(x)))
 		ymean = int(round(np.mean(y)))
 		tau1 = 0
-	sliceY=arr[np.ix_(range(sx),[ymean],z)][:,0,:].T
-	sliceX=arr[np.ix_([xmean],range(sy),z)][0,:,:].T
-	vY=model.z.v2[np.ix_(range(sx),[ymean],z)][:,0,:].T
-	vX=model.z.v1[np.ix_([xmean],range(sy),z)][0,:,:].T
+	sharey = False
+	if tight: z0 = z
+	else:
+		if dq:
+			xp,yp,z1p,z2p = xc, yc, zc[tau1_level[:,ymean]]-zc[tau1],zc[tau1_level[xmean,:]]-zc[tau1]
+			z0min = z[0]
+			z0max = z[-1]+1
+			z0min = min(z0min,np.min(tau1_level[:,ymean]))
+			z0max = max(z0max,1+np.max(tau1_level[:,ymean]))
+			z0min = min(z0min,np.min(tau1_level[xmean,:]))
+			z0max = max(z0max,1+np.max(tau1_level[ymean,:]))
+			delta = z0max - z0min
+			z0min = max(0, int(z0min-.1*delta))
+			z0max = min(sz, int(z0max+.1*delta))
+			z0 = np.arange(z0min, z0max)
+			sharey=True
+		else:
+			z0 = range(sz)
+	sliceY=arr[np.ix_(range(sx),[ymean],z0)][:,0,:].T
+	sliceX=arr[np.ix_([xmean],range(sy),z0)][0,:,:].T
+	vY=model.z.v2[np.ix_(range(sx),[ymean],z0)][:,0,:].T
+	vX=model.z.v1[np.ix_([xmean],range(sy),z0)][0,:,:].T
 	if rf > 1:	# Refine factor
 		vY = refine(vY,8)
 		vX = refine(vX,8)
 	vY=(vY>=0.)
 	vX=(vX>=0.)
-	extY=np.array([xc[0],xc[sx-1],zc[z[0]]-zc[tau1],zc[z[-1]]-zc[tau1]])
-	extX=np.array([yc[0],yc[sy-1],zc[z[0]]-zc[tau1],zc[z[-1]]-zc[tau1]])
-	f, (ax1, ax2) = plt.subplots(1, 2, figsize=(16,5))
+	extY=np.array([xc[0],xc[sx-1],zc[z0[0]]-zc[tau1],zc[z0[-1]]-zc[tau1]])
+	extX=np.array([yc[0],yc[sy-1],zc[z0[0]]-zc[tau1],zc[z0[-1]]-zc[tau1]])
+	f, (ax1, ax2) = plt.subplots(1, 2, figsize=(16,5), sharey=sharey)
 	ax1.set_aspect('equal')
 	ax2.set_aspect('equal')
 	plt.tight_layout(pad=4)
