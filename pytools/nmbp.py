@@ -15,6 +15,40 @@ nMBP providing two close local maxima in the indicator.
 
 Also if the position of the hypothetical nMBP in the intensity map is too
 far away from the underlying structure, the nMBP is eliminated.
+
+Via the functions export_nMBPs, import_nMBPs, importNext, report and
+setActive the nMBPs can be studies. The typical strategy is:
+
+1. export_nMBPs(fullfile, parfile, meanfile, height)
+	-> This will create uio files with cuts centred on each nMBP and
+	   at height 'height'. It also creates an index file '.nmbps'
+	   This step does not requires matplotlib
+
+2. import_nMBPs(indexfile, parfile)
+	-> This loads the header of the index file, and these next steps
+	   should be done in a computer where matplotlib is installed
+
+3. importNext()
+	-> This should be called as many times as there are nMBPs. At each
+	   call a new nMBP is loaded. It returns a list with:
+		* The coordinates (a tuple)
+		* Contrast (with respect to local neighbourhood)
+		* Contrast (with respect to global average)
+		* Diameter of the nMBP
+		* A flag specifying wheter or not the nMBP is set active
+		  (this flag is switched of for non-valid nMBPs after
+		   visual examination)
+
+4. report()
+	-> Prints a report of the physical properties of the current nMBP
+	   together with the corresponding plots
+
+5. setActive(active_flag)
+	-> Set the active_flag of the current nMBP (this modifies the index)
+
+6. close()
+	-> Closes the index
+
 '''
 
 import numpy as np
@@ -39,6 +73,7 @@ if not '_modelfile' in globals(): _modelfile = None
 if not '_parfile' in globals(): _parfile = None
 if not '_meanfile' in globals(): _meanfile = None
 if not '_indexfile' in globals(): _indexfile = None
+if not '_index' in globals(): _index = None
 
 if not '_tau1' in globals(): _tau1 = None
 if not '_vtau1' in globals(): _vtau1 = None
@@ -53,6 +88,7 @@ if not '_Ny' in globals(): _Ny = 0
 if not '_Npts' in globals(): _Npts = 0
 if not '_pt' in globals(): _pt = 0
 if not '_parameters' in globals(): _parameters = None
+if not '_pos' in globals(): _pos = 0
 
 def load_uio(modelfile, parfile=None, meanfile=None):
 	'''
@@ -95,7 +131,15 @@ def next():
 	return _model.modelitime
 
 def close():
-	_model.close
+	'''
+	Closes model or index file depending on the context
+	'''
+	global _model, _index
+	if _index != None:
+		_index.close()
+		_index = None
+	else:
+		_model.close
 
 def get_tau1vars(model=_model):
 	'''
@@ -139,12 +183,20 @@ def get_tau1vars(model=_model):
 normalize = lambda data: (data-np.min(data))/(np.max(data)-np.min(data))
 
 def computeIndicator(T=None, tau1=None, vorticity=None):
+	'''
+	This functions computes the indicator used to select nMBPs
+	It is the core of the detection algorithm
+	'''
 	if T == None: T=_T
 	if tau1 == None: tau1=_tau1
 	if vorticity == None: vorticity=_vtau1
 	return np.sqrt(normalize(T)**2*normalize(-tau1)**2*normalize(np.abs(vorticity)**2))
 
 def nearestMin(data, p, max_dist=20):
+	'''
+	Returns the nearest minimum to p together to a flag checking whether
+	or not it is not further away than max_dist
+	'''
 	mins = find_min(data)
 	dist = []
 	intensity = []
@@ -162,6 +214,9 @@ def nearestMin(data, p, max_dist=20):
 	return (int(m[0]), int(m[1])), 1
 
 def circleFootprint(N):
+	'''
+	Creates a circular "footprint" (or stencil) of diameter N
+	'''
 	fp = np.zeros((N,N), dtype=bool)
 	r = (N-1.)/2.
 	for i in range(N):
@@ -170,6 +225,13 @@ def circleFootprint(N):
 	return fp
 
 def getNMBPs(indicator, intensity=None, granules=None, l=50, footprint=None):
+	'''
+	Gets all nMBPs using the given indicator. If an intensity map is not
+	provided, temperature at isosurface tau=1. is taken in place. If
+	granules were already computed, they can be provided here to avoid
+	a new computations. If footprint is not provided a circular footprint
+	(or stencil) of diameter l is used.
+	'''
 	global _model, _T
 	if intensity == None: intensity = _T
 	if granules == None and _model == None: granules = getGranules(intensity, shrink=0.)
@@ -236,6 +298,11 @@ def getNMBPs(indicator, intensity=None, granules=None, l=50, footprint=None):
 
 
 def export_nMBPs(modelfile, parfile, meanfile, height, box=(100,100,100)):
+	'''
+	Export all nMBPs to smaller boxes of size 'box' centred at the nMBPs
+	position and height 'height' and saves the boxes to uio files.
+	An index file is further written, including intensity maps.
+	'''
 	global _model, _modelfile, _parfile, _meanfile, _allrad, _rad
 	itime = load_uio(modelfile, parfile, meanfile)
 	itime = next()
@@ -267,6 +334,7 @@ def export_nMBPs(modelfile, parfile, meanfile, height, box=(100,100,100)):
 			xdr.pack_float(pt[1])
 			xdr.pack_float(pt[2])
 			xdr.pack_float(pt[3])
+			xdr.pack_bool(True)
 			# Save uio file here!
 			_model.export(filename+'_'+str(_model.modelitime)+'_'+str(pX)+'_'+str(pY)+'.uio', centre=(pX, pY, height), box=box)
 		itime = next()
@@ -275,11 +343,15 @@ def export_nMBPs(modelfile, parfile, meanfile, height, box=(100,100,100)):
 		f.write(xdr.get_buffer())
 
 def import_nMBPs(indexfile, parfile):
-	global _model, _modelfile, _parfile, _indexfile, _xdr, _Nx, _Ny, _Npts, _pt
+	'''
+	Loads nMBPs that where written by the corresponding exporting
+	function. Actually this only reads the header of the index file.
+	'''
+	global _model, _modelfile, _parfile, _indexfile, _xdr, _Nx, _Ny, _Npts, _pt, _index
 	_parfile = parfile
 	_indexfile = indexfile.strip('.nmbps')
-	with open(indexfile, 'rb') as f:
-		_xdr = xdrlib.Unpacker(f.read())
+	_index = open(indexfile, 'rb')
+	_xdr = xdrlib.Unpacker(_index.read())
 	if _xdr.unpack_string() != 'nmbps_index':
 		print('Error: unknown file.')
 		return
@@ -287,7 +359,10 @@ def import_nMBPs(indexfile, parfile):
 	_Ny = _xdr.unpack_int()
 
 def importNext():
-	global _model, _modelfile, _parfile, _indexfile, _rad, _xdr, _Nx, _Ny, _Npts, _pt, _parameters
+	'''
+	Loads the next available nMBP (after calling import_nMBPs)
+	'''
+	global _model, _modelfile, _parfile, _indexfile, _rad, _xdr, _Nx, _Ny, _Npts, _pt, _parameters, _pos
 	if _pt < 0:
 		print('No more nMBPs available.')
 		return
@@ -308,14 +383,32 @@ def importNext():
 	contrast_local  = _xdr.unpack_float()
 	contrast_global = _xdr.unpack_float()
 	diametre        = _xdr.unpack_float()
+	_pos		= _xdr.get_position()
+	active_flag	= _xdr.unpack_bool()
 	# Load uio_file here!
 	_modelfile = _indexfile + '_' + str(modelitime) + '_' + str(pX) + '_' + str(pY) + '.uio'
 	load_uio(_modelfile, _parfile)
 
-	_parameters = ((pX, pY), contrast_local, contrast_global, diametre)
+	_parameters = ((pX, pY), contrast_local, contrast_global, diametre, active_flag)
 	return _parameters
 
+def setActive(active_flag):
+	'''
+	Set the active_flag of the current nMBP. This modified the index file.
+	'''
+	global _index, _pos
+	oldPos = _index.tell()
+	_index.seek(_pos)
+	xdr = xdrlib.Packer()
+	xdr.pack_bool(active_flag)
+	_index.write(xdr.get_buffer())
+	_index.seek(oldPos)
+
 def report():
+	'''
+	Prints a report of the current nMBP together with the corresponding
+	plots.
+	'''
 	global _model, _parameters
 	model = _model
 	tau = 1.
