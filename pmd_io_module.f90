@@ -1974,7 +1974,11 @@ subroutine pmd_openrd(unit, file, pmd_header, stat)
   endif
   !
   if (present(pmd_header)) then
-    call pmd_seek(unit, pmd_header0, 1)
+    if (sz>0) then
+      call pmd_seek(unit, pmd_header0, 1)
+    else
+      call pmd_fseek(unit, 0, 0)
+    endif
     pmd_header = pmd_header0
   else
     call pmd_fseek(unit, 0, 0)
@@ -2278,6 +2282,7 @@ subroutine rd_module_hd(unit, module_header, sz)
   character(len=sz), intent(out)        :: module_header
   integer                               :: hd_sz, pos
   !
+  if (sz <= 0) return
   call pmd_ftell(unit, pos)
   hd_sz = pmd_header_sz(unit)
   call pmd_fseek(unit, hd_sz, 0)
