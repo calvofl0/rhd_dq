@@ -186,10 +186,10 @@ type, public                            :: pmd_header_type
   integer                               :: pmd_version=2
   integer, dimension(6)                 :: localtime=(/0,0,0,0,0,0/)
   integer*1, dimension(2)               :: periodic=(/0,0/)
-  real, dimension(3)                    :: domain_sz=(/0.,0.,0./), &
+  double precision, dimension(3)        :: domain_sz=(/0.,0.,0./), &
                                            domain_origin=(/0.,0.,0./)
   integer, dimension(3)                 :: dimensions=(/0,0,0/)
-  real, dimension(8192)                 :: xc1=0., xc2=0., xc3=0.
+  double precision, dimension(8192)     :: xc1=0., xc2=0., xc3=0.
   integer                               :: n_radtheta=0, n_radphi=0
   character(len=1023)                   :: atomic_module=''
   character(len=4096)                   :: pmd_comment=''
@@ -234,7 +234,8 @@ end interface
 public pmd_openwr, pmd_openap, pmd_openrd, pmd_close, &
        pmd_set_sz, pmd_wr, pmd_rd, pmd_wr_header, pmd_rd_header, &
        pmd_append_box, pmd_rd_box, pmd_types_sz, pmd_set_localtime, &
-       pmd_header_sz, pmd_box_sz, pmd_seek, pmd_fseek, pmd_ftell
+       pmd_header_sz, pmd_box_sz, pmd_seek, pmd_fseek, pmd_ftell, &
+       pmd_seek_node, pmd_append_node, pmd_rd_node
 !
 contains
 !
@@ -1002,16 +1003,16 @@ subroutine pmd_rd_db(unit, d)
   select case (double_size)
     case (4)
       read(unit), f4
-      d=real(f4)
+      d=dble(f4)
     case (8)
       read(unit), f8
-      d=real(f8)
+      d=dble(f8)
     case (16)
       read(unit), f16
-      d=real(f16)
+      d=dble(f16)
     case default
       read(unit), f8
-      d=real(f8)
+      d=dble(f8)
   end select
 end subroutine pmd_rd_db
 !
@@ -1135,22 +1136,22 @@ subroutine pmd_rd_db_1d(unit, d)
     case (4)
       do item=1,size(d,1)
         read(unit), f4
-        d(item)=real(f4)
+        d(item)=dble(f4)
       end do
     case (8)
       do item=1,size(d,1)
         read(unit), f8
-        d(item)=real(f8)
+        d(item)=dble(f8)
       end do
     case (16)
       do item=1,size(d,1)
         read(unit), f16
-        d(item)=real(f16)
+        d(item)=dble(f16)
       end do
     case default
       do item=1,size(d,1)
         read(unit), f8
-        d(item)=real(f8)
+        d(item)=dble(f8)
       end do
   end select
 end subroutine pmd_rd_db_1d
@@ -1298,28 +1299,28 @@ subroutine pmd_rd_db_2d(unit, d)
       do j2=1,size(d,2)
         do j1=1,size(d,1)
           read(unit), f4
-          d(j1,j2)=real(f4)
+          d(j1,j2)=dble(f4)
         end do
       end do
     case (8)
       do j2=1,size(d,2)
         do j1=1,size(d,1)
           read(unit), f8
-          d(j1,j2)=real(f8)
+          d(j1,j2)=dble(f8)
         end do
       end do
     case (16)
       do j2=1,size(d,2)
         do j1=1,size(d,1)
           read(unit), f16
-          d(j1,j2)=real(f16)
+          d(j1,j2)=dble(f16)
         end do
       end do
     case default
       do j2=1,size(d,2)
         do j1=1,size(d,1)
           read(unit), f8
-          d(j1,j2)=real(f8)
+          d(j1,j2)=dble(f8)
         end do
       end do
   end select
@@ -1493,7 +1494,7 @@ subroutine pmd_rd_db_3d(unit, d, iostat)
         do j2=1,size(d,2)
           do j1=1,size(d,1)
             read(unit, iostat=iostat0), f4
-            d(j1,j2,j3)=real(f4)
+            d(j1,j2,j3)=dble(f4)
           end do
         end do
       end do
@@ -1502,7 +1503,7 @@ subroutine pmd_rd_db_3d(unit, d, iostat)
         do j2=1,size(d,2)
           do j1=1,size(d,1)
             read(unit, iostat=iostat0), f8
-            d(j1,j2,j3)=real(f8)
+            d(j1,j2,j3)=dble(f8)
           end do
         end do
       end do
@@ -1511,7 +1512,7 @@ subroutine pmd_rd_db_3d(unit, d, iostat)
         do j2=1,size(d,2)
           do j1=1,size(d,1)
             read(unit, iostat=iostat0), f16
-            d(j1,j2,j3)=real(f16)
+            d(j1,j2,j3)=dble(f16)
           end do
         end do
       end do
@@ -1520,7 +1521,7 @@ subroutine pmd_rd_db_3d(unit, d, iostat)
         do j2=1,size(d,2)
           do j1=1,size(d,1)
             read(unit, iostat=iostat0), f8
-            d(j1,j2,j3)=real(f8)
+            d(j1,j2,j3)=dble(f8)
           end do
         end do
       end do
@@ -1670,6 +1671,24 @@ function pmd_box_sz(pmd_header)
                * pmd_header%dimensions(3) * pmd_header%db_sz
 end function pmd_box_sz
 !
+function pmd_node_sz(unit, pmd_header)
+  !
+  implicit none
+  !
+  integer, intent(in)                   :: unit
+  integer                               :: pmd_node_sz
+  type(pmd_header_type), intent(in)     :: pmd_header
+  integer                               :: sz, header_sz, mod_hd_sz, &
+                                           ncells
+  !
+  inquire(unit, size=sz)
+  header_sz = pmd_header_sz(pmd_header)
+  mod_hd_sz = pmd_header%module_hd_sz
+  ncells = pmd_header%dimensions(1) * pmd_header%dimensions(2) &
+           * pmd_header%dimensions(3)
+  pmd_node_sz = int((sz-header_sz-mod_hd_sz)/ncells)
+end function pmd_node_sz
+!
 subroutine pmd_seek(unit, pmd_header, pos)
   !
   implicit none
@@ -1686,6 +1705,29 @@ subroutine pmd_seek(unit, pmd_header, pos)
   if (pos > 0) call pmd_fseek(unit, tobox0+(pos-1)*box_sz, 0)
   if (pos < 0) call pmd_fseek(unit, -pos*box_sz, 2)
 end subroutine pmd_seek
+!
+subroutine pmd_seek_node(unit, pmd_header, nodeX, nodeY, nodeZ)
+  !
+  implicit none
+  !
+  integer, intent(in)                   :: unit
+  type(pmd_header_type), intent(in)     :: pmd_header
+  integer, intent(in)                   :: nodeX, nodeY, nodeZ
+  integer                               :: hd_sz, tonode0, node_sz, &
+                                           dimX, dimY, dimZ, node
+  !
+  hd_sz   = pmd_header_sz(pmd_header)
+  tonode0 = hd_sz+pmd_header%module_hd_sz
+  node_sz = pmd_node_sz(unit, pmd_header)
+  dimX    = pmd_header%dimensions(0)
+  dimY    = pmd_header%dimensions(1)
+  dimZ    = pmd_header%dimensions(2)
+  node    = nodeX + nodeY * dimX + nodeZ * dimX*dimY
+  if (nodeX>=0.and.nodeX<dimX.and.nodeY>=0.and.nodeY<dimY &
+      .and.nodeZ>=0.and.nodeZ<dimZ) then
+    call pmd_fseek(unit, tonode0+node*node_sz, 0)
+  endif
+end subroutine pmd_seek_node
 !
 subroutine pmd_append_box_real_3d(unit, box)
   !
@@ -1750,6 +1792,33 @@ subroutine pmd_rd_box_db_3d(unit, box, iostat)
   if (present(iostat)) iostat=iostat0
   !
 end subroutine pmd_rd_box_db_3d
+!
+subroutine pmd_append_node(unit, node)
+  !
+  implicit none
+  !
+  integer, intent(in)                   :: unit
+  character, dimension(:), intent(in)   :: node
+  integer                               :: pos
+  !
+  call pmd_types_sz(unit, integer_size, double_size)
+  call pmd_ftell(unit, pos)
+  call pmd_fseek(unit, 0, 2)
+  call pmd_wr(unit, node)
+  call pmd_fseek(unit, pos, 0)
+end subroutine pmd_append_node
+!
+subroutine pmd_rd_node(unit, node)
+  !
+  implicit none
+  !
+  integer, intent(in)                   :: unit
+  character, dimension(:), intent(out)  :: node
+  !
+  call pmd_types_sz(unit, integer_size, double_size)
+  call pmd_rd(unit, node)
+  !
+end subroutine pmd_rd_node
 !
 subroutine pmd_openwr(unit, file, pmd_header, convert, stat)
   !
@@ -1875,7 +1944,8 @@ subroutine pmd_openap(unit, file, pmd_header, stat)
     endif
   endif
   if (pmd_box_sz(pmd_header0) > 0 .and. stat0 == 0) then
-    sz = int(data_sz / pmd_box_sz(pmd_header0))
+    !sz = int(data_sz / pmd_box_sz(pmd_header0))
+    sz = pmd_node_sz(unit, pmd_header)
   else
     sz = 0
   endif
@@ -1968,7 +2038,8 @@ subroutine pmd_openrd(unit, file, pmd_header, stat)
     endif
   endif
   if (pmd_box_sz(pmd_header0) > 0 .and. stat0 == 0) then
-    sz = int(data_sz / pmd_box_sz(pmd_header0))
+    !sz = int(data_sz / pmd_box_sz(pmd_header0))
+    sz = pmd_node_sz(unit, pmd_header0)
   else
     sz = 0
   endif
@@ -2067,9 +2138,11 @@ subroutine openrd(unit, file, magic_str, endianness, int_sz, db_sz, &
   integer, intent(out)                  :: pmd_version
   integer, dimension(6), intent(out)    :: localtime
   integer*1, dimension(2), intent(out)  :: periodic
-  real, dimension(3), intent(out)       :: domain_sz, domain_origin
+  double precision, dimension(3), &
+                      intent(out)       :: domain_sz, domain_origin
   integer, dimension(3), intent(out)    :: dimensions
-  real, dimension(8192), intent(out)    :: xc1, xc2, xc3
+  double precision, dimension(8192), &
+                         intent(out)    :: xc1, xc2, xc3
   integer, intent(out)                  :: n_radtheta, n_radphi
   character(len=1023), intent(out)      :: atomic_module
   character(len=4096), intent(out)      :: pmd_comment
@@ -2120,9 +2193,11 @@ subroutine openwr(unit, ltime, file, magic_str, endianness, int_sz, db_sz, &
   integer, intent(in)                   :: pmd_version
   integer, dimension(6), intent(in)     :: localtime
   integer*1, dimension(2), intent(in)   :: periodic
-  real, dimension(3), intent(in)        :: domain_sz, domain_origin
+  double precision, dimension(3), &
+                      intent(in)        :: domain_sz, domain_origin
   integer, dimension(3), intent(in)     :: dimensions
-  real, dimension(8192), intent(in)     :: xc1, xc2, xc3
+  double precision, dimension(8192), &
+                         intent(in)     :: xc1, xc2, xc3
   integer, intent(in)                   :: n_radtheta, n_radphi
   character(len=1023), intent(in)       :: atomic_module
   character(len=4096), intent(in)       :: pmd_comment
@@ -2151,7 +2226,7 @@ subroutine openwr(unit, ltime, file, magic_str, endianness, int_sz, db_sz, &
   pmd_header%module_hd_sz       = module_hd_sz
   pmd_header%unused_var         = unused_var
   !
-  if(pmd_header%localtime(1)<0.or.pmd_header%localtime(1)>11 &
+  if(pmd_header%localtime(1)<0 &
      .or.pmd_header%localtime(2)<1.or.pmd_header%localtime(2)>31 &
      .or.pmd_header%localtime(3)<0.or.pmd_header%localtime(3)>23 &
      .or.pmd_header%localtime(4)<0.or.pmd_header%localtime(4)>59 &
@@ -2180,9 +2255,11 @@ subroutine openap(unit, file, magic_str, endianness, int_sz, db_sz, &
   integer, intent(out)                  :: pmd_version
   integer, dimension(6), intent(out)    :: localtime
   integer*1, dimension(2), intent(out)  :: periodic
-  real, dimension(3), intent(out)       :: domain_sz, domain_origin
+  double precision, dimension(3), &
+                            intent(out) :: domain_sz, domain_origin
   integer, dimension(3), intent(out)    :: dimensions
-  real, dimension(8192), intent(out)    :: xc1, xc2, xc3
+  double precision, dimension(8192), &
+                         intent(out)    :: xc1, xc2, xc3
   integer, intent(out)                  :: n_radtheta, n_radphi
   character(len=1023), intent(out)      :: atomic_module
   character(len=4096), intent(out)      :: pmd_comment
@@ -2271,6 +2348,31 @@ subroutine append_nbox(unit, box, nx, ny, nz)
   call pmd_append_box(unit, box)
 end subroutine append_nbox
 !
+subroutine rd_node(unit, node, sz)
+  !
+  use pmd_io_module
+  !
+  implicit none
+  !
+  integer, intent(in)                   :: unit
+  integer, intent(in)                   :: sz
+  character, dimension(sz), intent(out) :: node
+  !
+  call pmd_rd_node(unit, node)
+end subroutine rd_node
+!
+subroutine append_node(unit, node)
+  !
+  use pmd_io_module
+  !
+  implicit none
+  !
+  integer, intent(in)                   :: unit
+  character, dimension(:), intent(in)   :: node
+  !
+  call pmd_append_node(unit, node)
+end subroutine append_node
+!
 subroutine rd_module_hd(unit, module_header, sz)
   !
   use pmd_io_module
@@ -2279,7 +2381,7 @@ subroutine rd_module_hd(unit, module_header, sz)
   !
   integer, intent(in)                   :: unit
   integer, intent(in)                   :: sz
-  character(len=sz), intent(out)        :: module_header
+  character, dimension(sz), intent(out) :: module_header
   integer                               :: hd_sz, pos
   !
   if (sz <= 0) return
@@ -2297,7 +2399,7 @@ subroutine wr_module_hd(unit, module_header)
   implicit none
   !
   integer, intent(in)                   :: unit
-  character(len=*), intent(in)          :: module_header
+  character, dimension(:), intent(in)   :: module_header
   integer                               :: hd_sz, pos
   !
   call pmd_ftell(unit, pos)

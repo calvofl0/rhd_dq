@@ -1556,14 +1556,33 @@ class uio_struct(dict):
 		self.pmd_comment	= pmd_handle[17].strip()
 		self.module_hd_sz	= pmd_handle[18]
 		self.unused_var		= pmd_handle[19]
-		ndatasets		= pmd_handle[20]
+		#ndatasets		= pmd_handle[20]
+		node_sz			= pmd_handle[20]
 		if with_pypmd:
-			self.module_header	= pypmd.rd_module_hd(unit,self.module_hd_sz)
-			for i in range(1,ndatasets+1):
-				data='data'+('{0:0>'+str(self.__pmd_digits)+'}').format(i)
-				self[data] = uio_struct_item()
-				self[data].value = np.empty(self.dimensions, order='F')
-				pypmd.rd_box(unit, self[data].value)
+			module_header = list(pypmd.rd_module_hd(unit,self.module_hd_sz))
+			for i in range(len(module_header)):
+				if module_header[i] == '':
+					module_header[i] = '\x00'
+			self.module_header	= bytes(''.join(module_header))
+			#for i in range(1,ndatasets+1):
+			#	data='data'+('{0:0>'+str(self.__pmd_digits)+'}').format(i)
+			#	self[data] = uio_struct_item()
+			#	self[data].value = np.empty(self.dimensions, order='F')
+			#	pypmd.rd_box(unit, self[data].value)
+			N = np.prod(self.dimensions)
+			nx, ny, nz = self.dimensions
+			node_data = []
+			for i in range(N):
+				data = list(pypmd.rd_node(unit, node_sz))
+				for j in range(len(data)):
+					if data[j] == '':
+						data[j] = '\x00'
+					data[j] = ord(data[j])
+				#node_data += [bytes(''.join(data))]
+				node_data += [data]
+			print(np.size(node_data))
+			print(str(node_sz))
+			self.node_data = np.transpose(np.array(node_data, dtype=np.uint8).reshape(nz,ny,nx,node_sz),(2,1,0,3))
 			pypmd.close(unit)
 	def pmd_write(self, filename):
 		if with_pypmd:
@@ -1581,13 +1600,20 @@ class uio_struct(dict):
 				if len(self.module_header)<self.module_hd_sz:
 					self.module_header = self.module_header+(self.module_hd_sz-len(self.module_header))*'\x00'
 				self.module_header = self.module_header[0:self.module_hd_sz]
-				pypmd.wr_module_hd(unit, self.module_header)
+				pypmd.wr_module_hd(unit, list(self.module_header))
 			for i in range(1,10**self.__pmd_digits-1):
 				data='data'+('{0:0>'+str(self.__pmd_digits)+'}').format(i)
 				if hasattr(self, data):
 					pypmd.append_box(unit, self[data].value)
 				else:
 					break
+			if hasattr(self, 'node_data'):
+				N = np.prod(self.dimensions)
+				node_sz = int(np.size(self.node_data)/N)
+				node_data = np.transpose(self.node_data,(2,1,0,3)).reshape((N,node_sz))
+				for node in node_data:
+					node = [chr(i) for i in node]
+					pypmd.append_node(unit, node)
 			pypmd.close(unit)
 		else:
 			print("You need to recompile with pypmd support.")

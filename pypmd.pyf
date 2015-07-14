@@ -18,12 +18,12 @@ python module pypmd ! in
                 integer intent(out) :: pmd_version
                 integer dimension(6),intent(out) :: local_time
                 integer*1 dimension(2),intent(out) :: periodic
-                real dimension(3),intent(out) :: domain_sz
-                real dimension(3),intent(out) :: domain_origin
+                double precision dimension(3),intent(out) :: domain_sz
+                double precision dimension(3),intent(out) :: domain_origin
                 integer dimension(3),intent(out) :: dimensions
-                real dimension(8192),intent(out) :: xc1
-                real dimension(8192),intent(out) :: xc2
-                real dimension(8192),intent(out) :: xc3
+                double precision dimension(8192),intent(out) :: xc1
+                double precision dimension(8192),intent(out) :: xc2
+                double precision dimension(8192),intent(out) :: xc3
                 integer intent(out) :: n_radtheta
                 integer intent(out) :: n_radphi
                 character*1023 intent(out) :: atomic_module
@@ -44,12 +44,12 @@ python module pypmd ! in
                 integer intent(in) :: pmd_version
                 integer dimension(6),intent(in) :: local_time
                 integer*1 dimension(2),intent(in) :: periodic
-                real dimension(3),intent(in) :: domain_sz
-                real dimension(3),intent(in) :: domain_origin
+                double precision dimension(3),intent(in) :: domain_sz
+                double precision dimension(3),intent(in) :: domain_origin
                 integer dimension(3),intent(in) :: dimensions
-                real dimension(8192),intent(in) :: xc1
-                real dimension(8192),intent(in) :: xc2
-                real dimension(8192),intent(in) :: xc3
+                double precision dimension(8192),intent(in) :: xc1
+                double precision dimension(8192),intent(in) :: xc2
+                double precision dimension(8192),intent(in) :: xc3
                 integer intent(in) :: n_radtheta
                 integer intent(in) :: n_radphi
                 character*1023 intent(in) :: atomic_module
@@ -69,12 +69,12 @@ python module pypmd ! in
                 integer intent(out) :: pmd_version
                 integer dimension(6),intent(out) :: local_time
                 integer*1 dimension(2),intent(out) :: periodic
-                real dimension(3),intent(out) :: domain_sz
-                real dimension(3),intent(out) :: domain_origin
+                double precision dimension(3),intent(out) :: domain_sz
+                double precision dimension(3),intent(out) :: domain_origin
                 integer dimension(3),intent(out) :: dimensions
-                real dimension(8192),intent(out) :: xc1
-                real dimension(8192),intent(out) :: xc2
-                real dimension(8192),intent(out) :: xc3
+                double precision dimension(8192),intent(out) :: xc1
+                double precision dimension(8192),intent(out) :: xc2
+                double precision dimension(8192),intent(out) :: xc3
                 integer intent(out) :: n_radtheta
                 integer intent(out) :: n_radphi
                 character*1023 intent(out) :: atomic_module
@@ -94,16 +94,27 @@ python module pypmd ! in
                 integer intent(in) :: unit
                 double precision dimension(:,:,:),intent(in) :: box
             end subroutine append_box
+            subroutine rd_node(unit,box,sz) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(in) :: unit
+                integer intent(in) :: sz
+                character dimension(sz),intent(out) :: box
+            end subroutine rd_node
+            subroutine append_node(unit,box) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                integer intent(in) :: unit
+                character dimension(:),intent(in) :: box
+            end subroutine append_node
             subroutine rd_module_hd(unit,module_header,sz) ! in :pypmd:pmd_io_module.f90:pypmd
                 use pmd_io_module
                 integer intent(in) :: unit
                 integer intent(in) :: sz
-                character*(sz),intent(out),depend(sz) :: module_header
+                character dimension(sz),intent(out) :: module_header
             end subroutine rd_module_hd
             subroutine wr_module_hd(unit,module_header) ! in :pypmd:pmd_io_module.f90:pypmd
                 use pmd_io_module
                 integer intent(in) :: unit
-                character*(*) intent(in) :: module_header
+                character dimension(:),intent(in) :: module_header
             end subroutine wr_module_hd
             subroutine close(unit) ! in :pypmd:pmd_io_module.f90:pypmd
                 use pmd_io_module
