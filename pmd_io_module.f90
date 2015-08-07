@@ -243,9 +243,10 @@ subroutine pmd_fseek(unit, pos, whence)
   !
   implicit none
   !
-  integer, intent(in)                   :: unit, pos, whence
+  integer, intent(in)                   :: unit, whence
+  integer*8, intent(in)                 :: pos
   character(len=80)                     :: act
-  integer                               :: pos0
+  integer*8                             :: pos0
   !
   select case (whence)
     case (0)
@@ -281,7 +282,7 @@ subroutine pmd_ftell(unit, pos)
   implicit none
   !
   integer, intent(in)                   :: unit
-  integer, intent(out)                  :: pos
+  integer*8, intent(out)                :: pos
   !
   inquire(unit, pos=pos)
   pos=pos-1
@@ -1536,7 +1537,7 @@ subroutine pmd_wr_header(unit, pmd_header)
   !
   integer, intent(in)                   :: unit
   type(pmd_header_type), intent(in)     :: pmd_header
-  integer                               :: pos
+  integer*8                             :: pos
   character(len=1023)                   :: atomic_module
   character(len=4096)                   :: pmd_comment
   !
@@ -1581,7 +1582,7 @@ subroutine pmd_rd_header(unit, pmd_header)
   !
   integer, intent(in)                   :: unit
   type(pmd_header_type), intent(out)    :: pmd_header
-  integer                               :: pos
+  integer*8                             :: pos
   !
   call pmd_ftell(unit, pos)
   call pmd_fseek(unit, 0, 0)
@@ -1620,7 +1621,8 @@ subroutine pmd_types_sz(unit, int_sz, db_sz, stat)
   integer, intent(in)                   :: unit
   integer*1, intent(out)                :: int_sz, db_sz
   integer, optional, intent(out)        :: stat
-  integer                               :: pos, stat0=0
+  integer*8                             :: pos
+  integer                               :: stat0=0
   !
   call pmd_ftell(unit, pos)
   call pmd_fseek(unit, 9, 0) !, status=stat0)
@@ -1678,8 +1680,9 @@ function pmd_node_sz(unit, pmd_header)
   integer, intent(in)                   :: unit
   integer                               :: pmd_node_sz
   type(pmd_header_type), intent(in)     :: pmd_header
-  integer                               :: sz, header_sz, mod_hd_sz, &
+  integer                               :: header_sz, mod_hd_sz, &
                                            ncells
+  integer*8                             :: sz
   !
   inquire(unit, size=sz)
   header_sz = pmd_header_sz(pmd_header)
@@ -1695,13 +1698,13 @@ subroutine pmd_seek(unit, pmd_header, pos)
   !
   integer, intent(in)                   :: unit
   type(pmd_header_type), intent(in)     :: pmd_header
-  integer, intent(in)                   :: pos
+  integer*8, intent(in)                 :: pos
   integer                               :: hd_sz, tobox0, box_sz
   !
   hd_sz = pmd_header_sz(pmd_header)
   tobox0 = hd_sz+pmd_header%module_hd_sz
   box_sz = pmd_box_sz(pmd_header)
-  if (pos == 0) call pmd_fseek(unit, hd_sz, 0)
+  if (pos == 0) call pmd_fseek(unit, int8(hd_sz), 0)
   if (pos > 0) call pmd_fseek(unit, tobox0+(pos-1)*box_sz, 0)
   if (pos < 0) call pmd_fseek(unit, -pos*box_sz, 2)
 end subroutine pmd_seek
@@ -1714,7 +1717,8 @@ subroutine pmd_seek_node(unit, pmd_header, nodeX, nodeY, nodeZ)
   type(pmd_header_type), intent(in)     :: pmd_header
   integer, intent(in)                   :: nodeX, nodeY, nodeZ
   integer                               :: hd_sz, tonode0, node_sz, &
-                                           dimX, dimY, dimZ, node
+                                           dimX, dimY, dimZ
+  integer*8                             :: node
   !
   hd_sz   = pmd_header_sz(pmd_header)
   tonode0 = hd_sz+pmd_header%module_hd_sz
@@ -1735,7 +1739,7 @@ subroutine pmd_append_box_real_3d(unit, box)
   !
   integer, intent(in)                   :: unit
   real, dimension(:,:,:), intent(in)    :: box
-  integer                               :: pos
+  integer*8                             :: pos
   !
   call pmd_types_sz(unit, integer_size, double_size)
   call pmd_ftell(unit, pos)
@@ -1751,7 +1755,7 @@ subroutine pmd_append_box_db_3d(unit, box)
   integer, intent(in)                   :: unit
   double precision, dimension(:,:,:), &
                              intent(in) :: box
-  integer                               :: pos
+  integer*8                             :: pos
   !
   call pmd_types_sz(unit, integer_size, double_size)
   call pmd_ftell(unit, pos)
@@ -1799,7 +1803,7 @@ subroutine pmd_append_node(unit, node)
   !
   integer, intent(in)                   :: unit
   character, dimension(:), intent(in)   :: node
-  integer                               :: pos
+  integer*8                             :: pos
   !
   call pmd_types_sz(unit, integer_size, double_size)
   call pmd_ftell(unit, pos)
@@ -1876,7 +1880,8 @@ subroutine pmd_openap(unit, file, pmd_header, stat)
                             intent(out) :: pmd_header
   integer, optional, intent(out)        :: stat
   type(pmd_header_type)                 :: pmd_header0
-  integer                               :: iostat0, stat0, sz, hd_sz, data_sz
+  integer                               :: iostat0, stat0, hd_sz
+  integer*8                             :: sz, data_sz
   integer*1                             :: endianness
   character(len=8)                      :: magic_str
   !
@@ -1970,7 +1975,8 @@ subroutine pmd_openrd(unit, file, pmd_header, stat)
                             intent(out) :: pmd_header
   integer, optional, intent(out)        :: stat
   type(pmd_header_type)                 :: pmd_header0
-  integer                               :: iostat0, stat0, sz, hd_sz, data_sz
+  integer                               :: iostat0, stat0, hd_sz
+  integer*8                             :: sz, data_sz
   integer*1                             :: endianness
   character(len=8)                      :: magic_str
   !
@@ -2032,6 +2038,7 @@ subroutine pmd_openrd(unit, file, pmd_header, stat)
     stat0 = -502
   endif
   data_sz=sz-hd_sz-pmd_header0%module_hd_sz
+  print*, sz, hd_sz, pmd_header0%module_hd_sz, data_sz
   if (pmd_box_sz(pmd_header0) > 0 .and. stat0 == 0) then
     if (mod(data_sz,pmd_box_sz(pmd_header0)) /= 0) then
       stat0 = -503
@@ -2382,12 +2389,13 @@ subroutine rd_module_hd(unit, module_header, sz)
   integer, intent(in)                   :: unit
   integer, intent(in)                   :: sz
   character, dimension(sz), intent(out) :: module_header
-  integer                               :: hd_sz, pos
+  integer                               :: hd_sz
+  integer*8                             :: pos
   !
   if (sz <= 0) return
   call pmd_ftell(unit, pos)
   hd_sz = pmd_header_sz(unit)
-  call pmd_fseek(unit, hd_sz, 0)
+  call pmd_fseek(unit, int8(hd_sz), 0)
   call pmd_rd(unit, module_header)
   call pmd_fseek(unit, pos, 0) 
 end subroutine rd_module_hd
@@ -2400,11 +2408,12 @@ subroutine wr_module_hd(unit, module_header)
   !
   integer, intent(in)                   :: unit
   character, dimension(:), intent(in)   :: module_header
-  integer                               :: hd_sz, pos
+  integer                               :: hd_sz
+  integer*8                             :: pos
   !
   call pmd_ftell(unit, pos)
   hd_sz = pmd_header_sz(unit)
-  call pmd_fseek(unit, hd_sz, 0)
+  call pmd_fseek(unit, int8(hd_sz), 0)
   call pmd_wr(unit, module_header)
   call pmd_fseek(unit, pos, 0) 
 end subroutine wr_module_hd
