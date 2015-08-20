@@ -9,7 +9,7 @@ import numpy as np
 def flood_fill(arr, centre, mask=None):
 	# Start from empty queue
         Q = []
-        if mask==None: mask=np.ones_like(arr, dtype=bool)
+        if mask is None: mask=np.ones_like(arr, dtype=bool)
         if not arr[centre]:
                 return np.zeros_like(arr, dtype=bool), np.zeros_like(arr, dtype=bool)
         arr0 = np.zeros_like(arr, dtype=bool)

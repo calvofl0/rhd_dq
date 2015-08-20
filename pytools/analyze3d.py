@@ -450,7 +450,7 @@ def wilson_depression(model=None,s=None,odb=None,tau=1.,r=3):
 	if not model: model=_model
 	tau1_level=np.array(pybold.level(model.dq.tau,tau),dtype=int)
 	tau1=int(round(np.mean(tau1_level)))
-	if s == None: s=snake.snake_from_box(model.z.rho,radius=r,start=tau1)
+	if s is None: s=snake.snake_from_box(model.z.rho,radius=r,start=tau1)
 	tau1_sindex = int(list(s[:,2]).index(tau1))
 	xmean = int(s[tau1_sindex,0])
 	ymean = int(s[tau1_sindex,1])
@@ -472,7 +472,7 @@ def contrast(arr,model=None,s=None,odb=None,tau=1.,r=3):
 	if not model: model=_model
 	tau1_level=np.array(pybold.level(model.dq.tau,tau),dtype=int)
 	tau1=int(round(np.mean(tau1_level)))
-	if s == None: s=snake.snake_from_box(model.z.rho,radius=r,start=tau1)
+	if s is None: s=snake.snake_from_box(model.z.rho,radius=r,start=tau1)
 	tau1_sindex = int(list(s[:,2]).index(tau1))
 	xmean = int(s[tau1_sindex,0])
 	ymean = int(s[tau1_sindex,1])
@@ -482,6 +482,19 @@ def contrast(arr,model=None,s=None,odb=None,tau=1.,r=3):
 	arr_bmean=np.mean(arr[:,:,tau1][b])
 	contrast_global = (arr[xmean,ymean,tau1]-arr_mean)/arr_mean
 	contrast_local = (arr[xmean,ymean,tau1]-arr_bmean)/arr_bmean
+	return contrast_global, contrast_local
+
+def contrastf(arr,odb,f):
+	'''
+	Computes local and global contrast of arr; (f(arr)-<arr>)/<arr>.
+	<arr> is taken in the local neighbourhood.
+	'''
+	o,d,b     = odb
+	arr_max   = f(arr[o])
+	arr_mean  = np.mean(arr)
+	arr_bmean = np.mean(arr[b])
+	contrast_global = (arr_max-arr_mean)/arr_mean
+	contrast_local  = (arr_max-arr_bmean)/arr_bmean
 	return contrast_global, contrast_local
 
 def refine(arr, n):
@@ -516,7 +529,7 @@ def plotv_slice(arr,model=None,s=None,dq=None,tau=1.,r=3,boxtext=None,show=True,
 		tau1_level=np.array(pybold.level(model.dq.tau,tau),dtype=int)
 		tau1=int(round(np.mean(tau1_level)))
 	else: tau1=int(np.size(model.z.xc3)/2.)
-	if s == None: s=snake.snake_from_box(model.z.rho,radius=r,start=tau1)
+	if s is None: s=snake.snake_from_box(model.z.rho,radius=r,start=tau1)
 	sx, sy, sz = np.shape(arr)
 	x, y, z = np.array(s, dtype=int).T
 	xc, yc, zc = model.z.xc1[:,0,0]/1.e5, model.z.xc2[0,:,0]/1.e5, model.z.xc3[0,0,:]/1.e5
@@ -647,9 +660,11 @@ def report(ireport=None, model=None, s=None, dq=None, odb=None, tau=1., z=None, 
 	else: print(fmt.format('File:')+'Unknown')
 	wd=wilson_depression(model,s,odb,tau,r)
 	print(fmt.format('Wilson depression:')+str(wd))
-	c_rho=contrast(model.z.rho,model,s,odb,tau,r)
+	#c_rho=contrast(model.z.rho,model,s,odb,tau,r)
+	c_rho=contrastf(model.z.rho[:,:,tau1],odb,np.min)
 	print(fmt.format('Density contrast:')+str(c_rho))
-	c_p=contrast(model.dq.P,model,s,odb,tau,r)
+	#c_p=contrast(model.dq.P,model,s,odb,tau,r)
+	c_p=contrastf(model.dq.P[:,:,tau1],odb,np.min)
 	print(fmt.format('Pressure contrast:')+str(c_p))
 	a_ratio=a_breaking_ratio(model,s,dq,odb,tau,z,r,centre='rho')
 	print(fmt.format('Acceleration ratio:')+str(a_ratio))
