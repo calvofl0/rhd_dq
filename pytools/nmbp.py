@@ -36,7 +36,7 @@ setActive the nMBPs can be studies. The typical strategy is:
 		* Contrast (with respect to global average)
 		* Diameter of the nMBP
 		* A flag specifying wheter or not the nMBP is set active
-		  (this flag is switched of for non-valid nMBPs after
+		  (this flag is switched off for non-valid nMBPs after
 		   visual examination)
 
 4. report()
@@ -112,7 +112,7 @@ def load_uio(modelfile, parfile=None, meanfile=None):
 		_parfile = parfile
 	else: _model.open(modelfile)
 	_model.header
-	next()
+	return next()
 
 def next():
 	'''
@@ -347,16 +347,18 @@ def import_nMBPs(indexfile, parfile):
 	Loads nMBPs that where written by the corresponding exporting
 	function. Actually this only reads the header of the index file.
 	'''
-	global _model, _modelfile, _parfile, _indexfile, _xdr, _Nx, _Ny, _Npts, _pt, _index
+	global _model, _modelfile, _parfile, _indexfile, _xdr, _Nx, _Ny, _Npts, _pt
 	_parfile = parfile
 	_indexfile = indexfile.strip('.nmbps')
-	_index = open(indexfile, 'rb')
-	_xdr = xdrlib.Unpacker(_index.read())
+	with open(indexfile, 'rb') as f:
+		_xdr = xdrlib.Unpacker(f.read())
 	if _xdr.unpack_string() != 'nmbps_index':
 		print('Error: unknown file.')
 		return
 	_Nx = _xdr.unpack_int()
 	_Ny = _xdr.unpack_int()
+	_pt = 0
+	_Npts = 0
 
 def importNext():
 	'''
@@ -387,22 +389,23 @@ def importNext():
 	active_flag	= _xdr.unpack_bool()
 	# Load uio_file here!
 	_modelfile = _indexfile + '_' + str(modelitime) + '_' + str(pX) + '_' + str(pY) + '.uio'
-	load_uio(_modelfile, _parfile)
+	if load_uio(_modelfile, _parfile) >= 0:
+		_model.close
 
-	_parameters = ((pX, pY), contrast_local, contrast_global, diametre, active_flag)
+	_parameters = [(pX, pY), contrast_local, contrast_global, diametre, active_flag]
 	return _parameters
 
 def setActive(active_flag):
 	'''
 	Set the active_flag of the current nMBP. This modified the index file.
 	'''
-	global _index, _pos
-	oldPos = _index.tell()
-	_index.seek(_pos)
-	xdr = xdrlib.Packer()
-	xdr.pack_bool(active_flag)
-	_index.write(xdr.get_buffer())
-	_index.seek(oldPos)
+	global _indexfile, _pos
+	_parameters[4] = active_flag
+	with open(_indexfile+'.nmbps', 'r+b') as f:
+		f.seek(_pos)
+		xdr = xdrlib.Packer()
+		xdr.pack_bool(active_flag)
+		f.write(xdr.get_buffer())
 
 def report():
 	'''
@@ -416,7 +419,8 @@ def report():
 	tau1_level=np.array(pybold.level(model.dq.tau,tau),dtype=int)
         tau1=int(round(np.mean(tau1_level)))
         tau1min=int(round(np.min(tau1_level)))
-	s=snake.snake_from_box(model.z.rho,radius=r,start=tau1)
+	seed=[_parameters[0][0]-model.z.dimension[0][0],_parameters[0][1]-model.z.dimension[0][1],tau1]
+	s=snake.snake_from_box(model.z.rho,radius=r,start=tau1,periodic=False,seed=seed)
 	tau1_sindex = int(list(s[:,2]).index(tau1))
         xmean = int(s[tau1_sindex,0])
         ymean = int(s[tau1_sindex,1])
@@ -424,6 +428,7 @@ def report():
 	rot_index = np.argmin(model.z.v1[:,:,tau1][odb[0]]**2)
         xrot,yrot = odb[0][0][rot_index], odb[0][1][rot_index]
 	xc1, xc2 = model.z.xc1.flatten()/1.e5, model.z.xc2.flatten()/1.e5
+	xb1, xb2 = model.z.xb1.flatten()/1.e5, model.z.xb2.flatten()/1.e5
 	ext = [xc1[0],xc1[-1],xc2[0],xc2[-1]]
 	#Ttau1 = pybold.varAtLevel(model.dq.T,model.dq.tau,1.)
 	rhotau1 = pybold.varAtLevel(model.z.rho,model.dq.tau,1.)
@@ -435,7 +440,7 @@ def report():
 	plt.ylabel('Spatial horizontal position (Y axis) [km]')
         oring=np.zeros_like(model.z.rho[:,:,tau1],dtype=bool)
         oring[odb[0]]=True
-        plt.imshow(oring,origin='bottom',alpha=.7,interpolation='none')
+        plt.imshow(oring,origin='bottom',alpha=.15,interpolation='none',extent=ext,cmap=plt.cm.gray_r)
 	X, Y = np.meshgrid(xc1, xc2)
 	arrfreq = 5
 	v1 = pybold.varAtLevel(model.z.v1, model.dq.tau, 1.)
@@ -467,8 +472,22 @@ def report():
         boxtext+= str(int(round(100*c_I[1])))+'%'
 	fig = plt.figure()
 	ax = fig.add_subplot(1,1,1)
-	ax.imshow(_rad.T, origin='bottom', cmap=plt.cm.gray)
-	circ = plt.Circle(_parameters[0], radius=50, color='r', fill=False)
+	deltaX = xb1[1]-xb1[0]
+	deltaY = xb2[1]-xb2[0]
+	xlim_min = xc1[0]-model.z.dimension[0][0]*deltaX
+	ylim_min = xc2[0]-model.z.dimension[0][1]*deltaY
+	szX, szY = np.shape(_rad.T)
+	ext = [xlim_min,xlim_min+szX*deltaX,ylim_min,ylim_min+szY*deltaY]
+	ax.imshow(_rad.T, origin='bottom', cmap=plt.cm.gray, extent=ext)
+	ax.set_xlim(xlim_min,xlim_min+szX*deltaX)
+	ax.set_ylim(ylim_min,ylim_min+szY*deltaY)
+	ax.set_xlabel('Spatial horizontal position (X axis) [km]')
+	ax.set_ylabel('Spatial horizontal position (Y axis) [km]')
+	c1_idx = _parameters[0][0] - model.z.dimension[0][0]
+	c2_idx = _parameters[0][1] - model.z.dimension[0][1]
+	centre = [xc1[c1_idx], xc2[c2_idx]]
+	c_r    = 50.*np.sqrt(deltaX**2+deltaY**2)/np.sqrt(2.)
+	circ = plt.Circle(centre, radius=c_r, color='r', fill=False)
 	ax.add_patch(circ)
 	sY,sX=plotv_slice(model.z.rho,model,s,dq=True,tau=tau,r=r,boxtext=boxtext,show=True,tight=False)
         plt.close()
