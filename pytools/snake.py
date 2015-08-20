@@ -240,16 +240,21 @@ def snake_twist(p,periodX=0,periodY=0):
 
 	return np.sqrt(np.sum(all_twist2))/len(p)
 
-def optimal_snake(s,periodX=0,periodY=0):
+def optimal_snake(s,periodX=0,periodY=0,seed=[]):
 	if len(s) == 0: return s
-	sz = np.array([len(s0) for s0 in s])
 	s_arr = np.array(s)
+	if len(seed) == 3:
+		s_arr = np.array([s0 for s0 in s if seed[2] in np.array(s0)[:,2]])
+		sindices = [int(list(np.array(s0)[:,2]).index(seed[2])) for s0 in s_arr]
+		D = np.array([d2(s_arr[i][sindices[i]][:2],seed[:2]) for i in range(len(s_arr))])
+		s_arr = s_arr[np.where(D<=3*np.min(D))]
+	sz = np.array([len(s0) for s0 in s_arr])
 	big_s = s_arr[np.where(sz==np.max(sz))]
 	twist = np.array([snake_twist(p,periodX,periodY) for p in big_s])
 
 	return big_s[np.where(twist==np.min(twist))]
 
-def snake_from_box(box, radius=1, periodic=True, start=-1):
+def snake_from_box(box, radius=1, periodic=True, start=-1, seed=[]):
 	if periodic :
 		pX = np.shape(box)[0]
 		pY = np.shape(box)[1]
@@ -277,7 +282,7 @@ def snake_from_box(box, radius=1, periodic=True, start=-1):
 			p = find_min(data, time=i)
 			snake_add_point(snake, p, i, pX, pY, radius, direction=-1, add_new=False)
 	#return snake
-	opt = optimal_snake(snake,pX,pY)
+	opt = optimal_snake(snake,pX,pY,seed)
 	if len(opt) > 0:
 		if len(opt) > 1:
 			print("Warning: multiple snakes found!")
