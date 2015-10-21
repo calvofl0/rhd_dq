@@ -215,9 +215,9 @@ python module _pybold ! in
             real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: v3
             real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: rho
             real, target,dimension(m1:n1,m2:n2,m3:n3),intent(inout) :: ei
-            real, target,dimension(:,:,:),intent(inout) :: Bb1
-            real, target,dimension(:,:,:),intent(inout) :: Bb2
-            real, target,dimension(:,:,:),intent(inout) :: Bb3
+            real, target,dimension(m1:n1+1,m2:n2,m3:n3),intent(inout) :: Bb1
+            real, target,dimension(m1:n1,m2:n2+1,m3:n3),intent(inout) :: Bb2
+            real, target,dimension(m1:n1,m2:n2,m3:n3+1),intent(inout) :: Bb3
             integer intent(in) :: itime
             logical intent(in) :: Bb_flag
             real intent(in) :: dtime
