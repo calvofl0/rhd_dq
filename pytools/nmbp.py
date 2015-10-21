@@ -119,7 +119,7 @@ def next():
 	Loads next snapshot
 	'''
 	global _model, _modelfile, _parfile, _meanfile, _allrad, _rad
-	if _modelfile == None: return -1
+	if _modelfile is None: return -1
 	print('Get next snapshot')
 	if _model.next < 0: return -1
 	print('Got next snapshot')
@@ -187,9 +187,9 @@ def computeIndicator(T=None, tau1=None, vorticity=None):
 	This functions computes the indicator used to select nMBPs
 	It is the core of the detection algorithm
 	'''
-	if T == None: T=_T
-	if tau1 == None: tau1=_tau1
-	if vorticity == None: vorticity=_vtau1
+	if T is None: T=_T
+	if tau1 is None: tau1=_tau1
+	if vorticity is None: vorticity=_vtau1
 	return np.sqrt(normalize(T)**2*normalize(-tau1)**2*normalize(np.abs(vorticity)**2))
 
 def nearestMin(data, p, max_dist=20):
@@ -233,12 +233,12 @@ def getNMBPs(indicator, intensity=None, granules=None, l=50, footprint=None):
 	(or stencil) of diameter l is used.
 	'''
 	global _model, _T
-	if intensity == None: intensity = _T
-	if granules == None and _model == None: granules = getGranules(intensity, shrink=0.)
-	if granules == None and _model != None:
+	if intensity is None: intensity = _T
+	if granules is None and _model is None: granules = getGranules(intensity, shrink=0.)
+	if granules is None and _model != None:
 		v3 = varAtLevel(_model.z.v3, _model.dq.tau, 1.)
 		granules = v3>0.
-	if footprint == None: fp = circleFootprint(l)
+	if footprint is None: fp = circleFootprint(l)
 	elif type(footprint) == int: fp = circleFootprint(footprint)
 	else: fp = footprint
 	p = find_min(-indicator)
@@ -305,7 +305,6 @@ def export_nMBPs(modelfile, parfile, meanfile, height, box=(100,100,100)):
 	'''
 	global _model, _modelfile, _parfile, _meanfile, _allrad, _rad
 	itime = load_uio(modelfile, parfile, meanfile)
-	itime = next()
 
 	parts = modelfile.split('.')
 	l = max(0, len(parts)-1)
