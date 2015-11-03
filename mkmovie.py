@@ -30,7 +30,7 @@ from os.path import isfile
 from glob import glob
 from socket import gethostname
 
-digits = 3
+digits = 4
 
 def check_ext_in(filename) :
 	if not (filename.endswith('.tar') or filename.endswith('.mean')) :
@@ -244,6 +244,6 @@ if args.output.endswith('.tar') :
 	system('tar cf '+args.output+' -C '+tmpfolder+' '+" ".join(map(lambda file:'"'+basename(file)+'"',glob(tmpfolder+'/*'))))
 elif args.output.endswith('.mp4') :
 	print('Creating movie...')
-	system('ffmpeg -r 15 -i '+tmpfolder+'/snapshot%03d.png -c:v libx264 '+args.output)
+	system('ffmpeg -r 15 -i '+tmpfolder+'/snapshot%0'+str(digits)+'d.png -c:v libx264 '+args.output)
 
 rmtree(tmpfolder)
