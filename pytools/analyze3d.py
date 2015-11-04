@@ -484,13 +484,16 @@ def contrast(arr,model=None,s=None,odb=None,tau=1.,r=3):
 	contrast_local = (arr[xmean,ymean,tau1]-arr_bmean)/arr_bmean
 	return contrast_global, contrast_local
 
-def contrastf(arr,odb,f):
+def contrastf(arr,odb,f,fOnWholeArr=True):
 	'''
 	Computes local and global contrast of arr; (f(arr)-<arr>)/<arr>.
 	<arr> is taken in the local neighbourhood.
 	'''
 	o,d,b     = odb
-	arr_max   = f(arr[o])
+	if fOnWholeArr:
+		arr_max   = f(arr)
+	else:
+		arr_max   = f(arr[o])
 	arr_mean  = np.mean(arr)
 	arr_bmean = np.mean(arr[b])
 	contrast_global = (arr_max-arr_mean)/arr_mean
