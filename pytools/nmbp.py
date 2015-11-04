@@ -292,7 +292,7 @@ def getNMBPs(indicator, intensity=None, granules=None, l=50, footprint=None):
 		background.append(np.sum(dnh)/np.count_nonzero(dnh))
 		contrast_local.append(np.mean(intensity[zip(*zones[i])]) / background[i])
 		contrast_global.append(np.mean(intensity[zip(*zones[i])]) / int_global)
-		diametre.append(np.sqrt(len(zones[i])/np.pi))
+		diametre.append(2.*np.sqrt(len(zones[i])/np.pi))
 	
 	return zip(p, np.array(contrast_local)-1., np.array(contrast_global)-1., diametre)
 
@@ -375,6 +375,10 @@ def importNext():
 		_rad = np.array(_xdr.unpack_array(_xdr.unpack_float)).reshape((_Nx, _Ny))
 		_Npts = _xdr.unpack_int()
 		_pt = 0
+		if _Npts <= _pt:
+			_pt = -1
+			print('No more nMBPs available.')
+			return
 	else:
 		_pt = _pt+1
 
@@ -439,7 +443,7 @@ def report():
 	plt.ylabel('Spatial horizontal position (Y axis) [km]')
         oring=np.zeros_like(model.z.rho[:,:,tau1],dtype=bool)
         oring[odb[0]]=True
-        plt.imshow(oring,origin='bottom',alpha=.15,interpolation='none',extent=ext,cmap=plt.cm.gray_r)
+        plt.imshow(oring.T,origin='bottom',alpha=.15,interpolation='none',extent=ext,cmap=plt.cm.gray_r)
 	X, Y = np.meshgrid(xc1, xc2)
 	arrfreq = 5
 	v1 = pybold.varAtLevel(model.z.v1, model.dq.tau, 1.)
