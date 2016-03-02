@@ -1607,7 +1607,10 @@ class uio_struct(dict):
 					pypmd.append_box(unit, self[data].value)
 				else:
 					break
-			if hasattr(self, 'node_data'):
+			if hasattr(self, 'node_generator'):
+				for node in self.node_generator():
+					pypmd.append_node(unit, node)
+			elif hasattr(self, 'node_data'):
 				N = np.prod(self.dimensions)
 				node_sz = int(np.size(self.node_data)/N)
 				node_data = np.transpose(self.node_data,(2,1,0,3)).reshape((N,node_sz))
