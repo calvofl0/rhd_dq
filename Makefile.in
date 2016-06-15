@@ -1,6 +1,7 @@
 # Compiler
 FC=@FC@
 G77=@G77@
+CC=@CC@
 OPENMP=@OPENMP@
 
 # CO5BOLD paths
@@ -25,6 +26,12 @@ else
 	OPENMP_FCFLAGS=-fopenmp
 endif
 
+ifeq ($(CC),icc)
+	CBACKTRACE=-traceback
+else
+	CBACKTRACE=-fbacktrace
+endif
+
 ifneq ($(OPENMP),yes)
 	OPENMP_FCFLAGS=
 endif
@@ -35,11 +42,13 @@ VISIT_LDFLAG=@VISIT_LDFLAG@
 DEBUG=@DEBUG@
 
 ifeq ($(DEBUG),yes)
-	FCFLAGS=-c $(OPENMP_FCFLAGS) $(FPIC) $(PP) -g $(BACKTRACE) $(PYBOLD) -I"$(DEPSRCPATH)"
+	FCFLAGS=-c $(OPENMP_FCFLAGS) $(FPIC) $(PP) -g $(BACKTRACE) $(PYBOLD) -I"$(DEPSRCPATH)" -I.
 	FLFLAGS=-g $(BACKTRACE)
+	CCFLAGS=-c -g $(CBACKTRACE)
 else
-	FCFLAGS=-c $(OPENMP_FCFLAGS) $(FPIC) $(PP) $(PYBOLD) -I"$(DEPSRCPATH)"
+	FCFLAGS=-c $(OPENMP_FCFLAGS) $(FPIC) $(PP) $(PYBOLD) -I"$(DEPSRCPATH)" -I.
 	FLFLAGS=
+	CCFLAGS=-c
 endif
 
 ifeq ($(OPENMP),yes)
@@ -53,8 +62,9 @@ endif
 # Makefile variables
 OUT=rhd_dq_module.a
 OUTLIB=_pybold.so pypmd.so
-SRC=$(wildcard *.f90)
+SRC=$(wildcard rhd*.f90) $(wildcard uio*.f90)
 OBJ=$(SRC:.f90=.o)
+GETDQ_OBJ=get_dq_f90.o get_dq.o
 DEP=rhd_sub_module.o gasinter_routines.o str_module.o const_module.o uio_bulk_module.o rhd_action_module.o rhd_box_module.o rhd_gl_module.o rhd_io_module.o rhd_prop_module.o uio_base_module.o uio_bulk_module.o uio_mac_module.o uio_table_module.o opta_routines.o opta_dust.o
 
 all: $(OUT)
@@ -80,6 +90,35 @@ rhd_dq_module.a: $(OBJ)
                 "$(DEPSRCPATH)/gasinter_routines.o" \
                 "$(DEPSRCPATH)/str_module.o" \
                 "$(DEPSRCPATH)/const_module.o"
+
+get_dq.a: $(OBJ) get_dq_f90.o get_dq.o
+	@ar rcvs get_dq.a \
+		"get_dq_f90.o" \
+		"get_dq.o" \
+                "rhd_dq_module.o" \
+                "rhd_dq_box.o" \
+		"uio_reader_module.o" \
+                "$(DEPSRCPATH)/rhd_sub_module.o" \
+                "$(DEPSRCPATH)/rhd_action_module.o" \
+                "$(DEPSRCPATH)/rhd_box_module.o" \
+                "$(DEPSRCPATH)/rhd_gl_module.o" \
+                "$(DEPSRCPATH)/rhd_io_module.o" \
+                "$(DEPSRCPATH)/rhd_prop_module.o" \
+                "$(DEPSRCPATH)/uio_base_module.o" \
+                "$(DEPSRCPATH)/uio_bulk_module.o" \
+                "$(DEPSRCPATH)/uio_mac_module.o" \
+                "$(DEPSRCPATH)/uio_table_module.o" \
+                "$(DEPSRCPATH)/opta_routines.o" \
+                "$(DEPSRCPATH)/opta_dust.o" \
+                "$(DEPSRCPATH)/gasinter_routines.o" \
+                "$(DEPSRCPATH)/str_module.o" \
+                "$(DEPSRCPATH)/const_module.o"
+
+get_dq_f90.o: get_dq_f90.f90 $(OBJ)
+	$(FC) $(FCFLAGS) $<
+
+get_dq.o: get_dq.c
+	$(CC) $(CCFLAGS) $<
 
 uio_reader_module.o: uio_reader_module.f90 rhd_dq_module.o rhd_dq_box.o
 	@$(MAKE) dep

@@ -43,6 +43,7 @@ else
 fi
 FC=$(grep 'F90_COMPILER' $DEPSRCPATH/.configurerc | sed 's/F90_COMPILER=//g' | sed 's/^\"//g' | sed 's/\"$//g')
 AC_PROG_FC()
+AC_PROG_CC()
 AC_OPENMP()
 AC_SUBST(FC,$FC)
 AC_SUBST(G77,$G77)
