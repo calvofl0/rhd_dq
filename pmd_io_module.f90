@@ -1542,7 +1542,7 @@ subroutine pmd_wr_header(unit, pmd_header)
   character(len=4096)                   :: pmd_comment
   !
   call pmd_ftell(unit, pos)
-  call pmd_fseek(unit, 0, 0)
+  call pmd_fseek(unit, 0_8, 0)
   !
   integer_size  = pmd_header%int_sz
   double_size   = pmd_header%db_sz
@@ -1585,7 +1585,7 @@ subroutine pmd_rd_header(unit, pmd_header)
   integer*8                             :: pos
   !
   call pmd_ftell(unit, pos)
-  call pmd_fseek(unit, 0, 0)
+  call pmd_fseek(unit, 0_8, 0)
   !
   call pmd_rd(unit, pmd_header%magic_str)
   call pmd_rd(unit, pmd_header%endianness)
@@ -1625,7 +1625,7 @@ subroutine pmd_types_sz(unit, int_sz, db_sz, stat)
   integer                               :: stat0=0
   !
   call pmd_ftell(unit, pos)
-  call pmd_fseek(unit, 9, 0) !, status=stat0)
+  call pmd_fseek(unit, 9_8, 0) !, status=stat0)
   !
   if (stat0 == 0) read(unit, iostat=stat0), int_sz
   if (stat0 == 0) read(unit, iostat=stat0), db_sz
@@ -1723,9 +1723,9 @@ subroutine pmd_seek_node(unit, pmd_header, nodeX, nodeY, nodeZ)
   hd_sz   = pmd_header_sz(pmd_header)
   tonode0 = hd_sz+pmd_header%module_hd_sz
   node_sz = pmd_node_sz(unit, pmd_header)
-  dimX    = pmd_header%dimensions(0)
-  dimY    = pmd_header%dimensions(1)
-  dimZ    = pmd_header%dimensions(2)
+  dimX    = pmd_header%dimensions(1)
+  dimY    = pmd_header%dimensions(2)
+  dimZ    = pmd_header%dimensions(3)
   node    = nodeX + nodeY * dimX + nodeZ * dimX*dimY
   if (nodeX>=0.and.nodeX<dimX.and.nodeY>=0.and.nodeY<dimY &
       .and.nodeZ>=0.and.nodeZ<dimZ) then
@@ -1743,7 +1743,7 @@ subroutine pmd_append_box_real_3d(unit, box)
   !
   call pmd_types_sz(unit, integer_size, double_size)
   call pmd_ftell(unit, pos)
-  call pmd_fseek(unit, 0, 2)
+  call pmd_fseek(unit, 0_8, 2)
   call pmd_wr(unit, box)
   call pmd_fseek(unit, pos, 0)
 end subroutine pmd_append_box_real_3d
@@ -1759,7 +1759,7 @@ subroutine pmd_append_box_db_3d(unit, box)
   !
   call pmd_types_sz(unit, integer_size, double_size)
   call pmd_ftell(unit, pos)
-  call pmd_fseek(unit, 0, 2)
+  call pmd_fseek(unit, 0_8, 2)
   call pmd_wr(unit, box)
   call pmd_fseek(unit, pos, 0)
 end subroutine pmd_append_box_db_3d
@@ -1807,7 +1807,7 @@ subroutine pmd_append_node(unit, node)
   !
   call pmd_types_sz(unit, integer_size, double_size)
   call pmd_ftell(unit, pos)
-  call pmd_fseek(unit, 0, 2)
+  call pmd_fseek(unit, 0_8, 2)
   call pmd_wr(unit, node)
   call pmd_fseek(unit, pos, 0)
 end subroutine pmd_append_node
@@ -1859,7 +1859,7 @@ subroutine pmd_openwr(unit, file, pmd_header, convert, stat)
   if (iostat0 == 0) then
   if (present(pmd_header)) then
     call pmd_wr_header(unit, pmd_header)
-    call pmd_fseek(unit, 0, 2)
+    call pmd_fseek(unit, 0_8, 2)
     do i=1,pmd_header%module_hd_sz
       call pmd_wr(unit, char(0))
     end do
@@ -1903,7 +1903,7 @@ subroutine pmd_openap(unit, file, pmd_header, stat)
     if (present(stat)) stat = -501
     return
   endif
-  call pmd_fseek(unit, 8, 0)
+  call pmd_fseek(unit, 8_8, 0)
   call pmd_rd(unit, endianness)
   close(unit)
   if (endianness == 0) then
@@ -1923,7 +1923,7 @@ subroutine pmd_openap(unit, file, pmd_header, stat)
   if (stat0 == 0) then
   inquire(unit, size=sz)
   if(sz >= 8) then
-    call pmd_fseek(unit, 0, 0)
+    call pmd_fseek(unit, 0_8, 0)
     read(unit), magic_str
     if (magic_str /= pmd_magic_str) then
       if (present(stat)) stat = -500
@@ -1954,7 +1954,7 @@ subroutine pmd_openap(unit, file, pmd_header, stat)
   else
     sz = 0
   endif
-  call pmd_fseek(unit, 0, 2)
+  call pmd_fseek(unit, 0_8, 2)
   !
   endif ! Open 2nd time
   endif ! Open 1st time
@@ -1998,7 +1998,7 @@ subroutine pmd_openrd(unit, file, pmd_header, stat)
     if (present(stat)) stat = -501
     return
   endif
-  call pmd_fseek(unit, 8, 0)
+  call pmd_fseek(unit, 8_8, 0)
   call pmd_rd(unit, endianness)
   close(unit)
   if (endianness == 0) then
@@ -2018,7 +2018,7 @@ subroutine pmd_openrd(unit, file, pmd_header, stat)
   if (stat0 == 0) then
   inquire(unit, size=sz)
   if (sz >= 8) then
-    call pmd_fseek(unit, 0, 0)
+    call pmd_fseek(unit, 0_8, 0)
     read(unit), magic_str
     if (magic_str /= pmd_magic_str) then
       if (present(stat)) stat = -500
@@ -2053,13 +2053,13 @@ subroutine pmd_openrd(unit, file, pmd_header, stat)
   !
   if (present(pmd_header)) then
     if (sz>0) then
-      call pmd_seek(unit, pmd_header0, 1)
+      call pmd_seek(unit, pmd_header0, 1_8)
     else
-      call pmd_fseek(unit, 0, 0)
+      call pmd_fseek(unit, 0_8, 0)
     endif
     pmd_header = pmd_header0
   else
-    call pmd_fseek(unit, 0, 0)
+    call pmd_fseek(unit, 0_8, 0)
   endif
   endif ! Open 2nd time
   endif ! Open 1st time
@@ -2465,7 +2465,7 @@ end module pypmd
 !  !inquire(1, size=sz)
 !  !print*, sz
 !  print*, 'box_sz', pmd_box_sz(header)
-!  call pmd_seek(1, header, 0)
+!  call pmd_seek(1, header, 0_8)
 !  call pmd_wr(1, '1234')
 !  do i=1,24
 !    db = i
@@ -2478,7 +2478,7 @@ end module pypmd
 !  call pmd_ftell(1, pos)
 !  !inquire(1,pos=pos)
 !  print*, 't', pos
-!  call pmd_fseek(1,1,1)
+!  call pmd_fseek(1,1_8,1)
 !  !read(1,pos=pos+2)
 !  call pmd_ftell(1,pos)
 !  !inquire(1,pos=pos)
