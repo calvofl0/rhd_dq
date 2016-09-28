@@ -140,6 +140,7 @@ logical                                 :: use_dq
 character*(let)                         :: r_modelfile, r_parfile
 integer                                 :: r_nc, r_nmodel, r_imodel
 type(integers_ll)                       :: uio_index
+logical                                 :: inside_z_flag=.false.
 !
 contains
 !
@@ -183,94 +184,98 @@ endif
 processed=.True.
 if (qtype == realna .and. ndim == 3) then
         !print*, 'Inside wrapper'
-        select case (trim(label))
-          case ('rho')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'rho')
-                  call uio_rd(nc, termt, ntt, dq_rho, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('ei')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'ei')
-                  call uio_rd(nc, termt, ntt, dq_ei, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('v1')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'v1')
-                  call uio_rd(nc, termt, ntt, dq_v1, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('v2')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'v2')
-                  call uio_rd(nc, termt, ntt, dq_v2, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('v3')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'v3')
-                  call uio_rd(nc, termt, ntt, dq_v3, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('bb1')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'Bb1')
-                  call uio_rd(nc, termt, ntt, dq_Bb1, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('bb2')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'Bb2')
-                  call uio_rd(nc, termt, ntt, dq_Bb2, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('bb3')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'Bb3')
-                  call uio_rd(nc, termt, ntt, dq_Bb3, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('xb1')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xb1')
-                  call uio_rd(nc, termt, ntt, dq_xb1, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('xb2')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xb2')
-                  call uio_rd(nc, termt, ntt, dq_xb2, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('xb3')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xb3')
-                  call uio_rd(nc, termt, ntt, dq_xb3, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('xc1')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xc1')
-                  call uio_rd(nc, termt, ntt, dq_xc1, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('xc2')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xc2')
-                  call uio_rd(nc, termt, ntt, dq_xc2, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case ('xc3')
-                  call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xc3')
-                  call uio_rd(nc, termt, ntt, dq_xc3, &
-                              ident, mode=3, name=name, unit=unit, &
-                              outstr=outstr0, ierr=ierr0)
-                  if (.not. norec0) call record('link')
-          case default
-                  processed=.False.
-        end select
+        if (inside_z_flag) then
+          select case (trim(label))
+            case ('rho')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'rho')
+                    call uio_rd(nc, termt, ntt, dq_rho, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('ei')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'ei')
+                    call uio_rd(nc, termt, ntt, dq_ei, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('v1')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'v1')
+                    call uio_rd(nc, termt, ntt, dq_v1, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('v2')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'v2')
+                    call uio_rd(nc, termt, ntt, dq_v2, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('v3')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'v3')
+                    call uio_rd(nc, termt, ntt, dq_v3, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('bb1')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'Bb1')
+                    call uio_rd(nc, termt, ntt, dq_Bb1, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('bb2')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'Bb2')
+                    call uio_rd(nc, termt, ntt, dq_Bb2, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('bb3')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'Bb3')
+                    call uio_rd(nc, termt, ntt, dq_Bb3, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('xb1')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xb1')
+                    call uio_rd(nc, termt, ntt, dq_xb1, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('xb2')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xb2')
+                    call uio_rd(nc, termt, ntt, dq_xb2, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('xb3')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xb3')
+                    call uio_rd(nc, termt, ntt, dq_xb3, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('xc1')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xc1')
+                    call uio_rd(nc, termt, ntt, dq_xc1, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('xc2')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xc2')
+                    call uio_rd(nc, termt, ntt, dq_xc2, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case ('xc3')
+                    call rhd_dq_vars_init(m1, n1, m2, n2, m3, n3, 'xc3')
+                    call uio_rd(nc, termt, ntt, dq_xc3, &
+                                ident, mode=3, name=name, unit=unit, &
+                                outstr=outstr0, ierr=ierr0)
+                    if (.not. norec0) call record('link')
+            case default
+                    processed=.False.
+          end select
+        else
+          processed=.False.
+        endif
 else if (qtype == intena .and. ndim == 2 .and. trim(label) == 'dimension') then
         allocate(inte2D(m1:n1,m2:n2))
         call uio_rd(nc, termt, ntt, inte2D, &
@@ -447,6 +452,11 @@ else
                               !print*, char0
                               if (trim(label) == 'box_id') then
                                       label=char0
+                                      if (trim(label) .eq. "z") then
+                                        inside_z_flag = .true.
+                                      else
+                                        inside_z_flag = .false.
+                                      endif
                                       call record('rename')
                                       label=ident
                               endif
