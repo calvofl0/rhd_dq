@@ -489,7 +489,7 @@ if (dq_status.eq.0) then
   !dq_deltay = tmp_array1(1)
   !tmp_array1 = (dq_xb3(dq_n3+1)-dq_xb3(dq_m3))/dq_nz
   !dq_deltaz = tmp_array1(1)
-  if(dq_Bb_flag) then
+  if(dq_Bb_flag.and.allocated(dq_Bb1)) then
     write(dq_nc_p,*) 'Bb_flag present.'
     dq_Bb1 = dq_Bb1*sqrt(fourpi_drk)
     dq_Bb2 = dq_Bb2*sqrt(fourpi_drk)
