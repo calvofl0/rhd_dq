@@ -32,6 +32,13 @@ python module pypmd ! in
                 integer intent(out) :: unused_var
                 integer intent(out) :: stat
             end subroutine openrd
+            subroutine rd_nodebox(file,idx,box,stat) ! in :pypmd:pmd_io_module.f90:pypmd
+                use pmd_io_module
+                character*(*) intent(in) :: file
+                integer intent(in) :: idx
+                double precision dimension(:,:,:),intent(inout) :: box
+                integer intent(out) :: stat
+            end subroutine rd_nodebox
             subroutine openwr(unit,ltime,file,magic_str,endianness,int_sz,db_sz,pmd_version,local_time,periodic,domain_sz,domain_origin,dimensions,xc1,xc2,xc3,n_radtheta,n_radphi,atomic_module,pmd_comment,module_hd_sz,unused_var,stat) ! in :pypmd:pmd_io_module.f90:pypmd
                 use pmd_io_module
                 integer intent(out) :: unit

@@ -176,7 +176,7 @@ module pmd_io_module
 implicit none
 private
 !
-integer*1                               :: integer_size=4, double_size=8
+integer*1                               :: integer_size=4_1, double_size=8_1
 character(len=8)                        :: pmd_magic_str='portapmd'
 !
 type, public                            :: pmd_header_type
@@ -235,7 +235,7 @@ public pmd_openwr, pmd_openap, pmd_openrd, pmd_close, &
        pmd_set_sz, pmd_wr, pmd_rd, pmd_wr_header, pmd_rd_header, &
        pmd_append_box, pmd_rd_box, pmd_types_sz, pmd_set_localtime, &
        pmd_header_sz, pmd_box_sz, pmd_seek, pmd_fseek, pmd_ftell, &
-       pmd_seek_node, pmd_append_node, pmd_rd_node
+       pmd_seek_node, pmd_append_node, pmd_rd_node, pmd_node_sz
 !
 contains
 !
@@ -294,8 +294,8 @@ subroutine pmd_set_sz(pmd_int_sz, pmd_db_sz)
   !
   integer, intent(in)                   :: pmd_int_sz, pmd_db_sz
   !
-  integer_size = pmd_int_sz
-  double_size = pmd_db_sz
+  integer_size = int(pmd_int_sz, 4)
+  double_size = int(pmd_db_sz, 4)
 end subroutine pmd_set_sz
 !
 subroutine pmd_wr_int8(unit, i)
@@ -2181,6 +2181,56 @@ subroutine openrd(unit, file, magic_str, endianness, int_sz, db_sz, &
   module_hd_sz  = pmd_header%module_hd_sz
   unused_var    = pmd_header%unused_var
 end subroutine openrd
+!
+subroutine rd_nodebox(file, idx, box, stat)
+  !
+  use pmd_io_module
+  !
+  implicit none
+  !
+  character(*), intent(in)              :: file
+  integer, intent(in)                   :: idx
+  double precision, dimension(:,:,:), &
+                          intent(inout) :: box
+  integer, intent(out)                  :: stat
+  integer                               :: unit
+  integer*8                             :: node_sz
+  type(pmd_header_type)                 :: pmd_header
+  integer                               :: nx, ny, nz, i, j, k
+  integer                               :: dims
+  integer, dimension(3)                 :: shp
+  !
+  unit = newunit()
+  call pmd_openrd(unit, file, pmd_header, stat=stat)
+  if (stat >= 0) then
+    call pmd_set_sz(int(pmd_header%int_sz, 4), int(pmd_header%db_sz, 4))
+    node_sz = pmd_node_sz(unit, pmd_header)
+    nx = pmd_header%dimensions(1)
+    ny = pmd_header%dimensions(2)
+    nz = pmd_header%dimensions(3)
+    if (size(shape(box)).eq.3) then
+      shp = shape(box)
+      if (.not.(shp(1).eq.nx.and.shp(2).eq.ny.and.shp(3).eq.nz)) stat=-1
+    else
+      stat=-1
+    endif
+    if (stat>=0) then
+      call pmd_seek(unit, pmd_header, 1_8)
+      do k=1,nz
+        do j=1,ny
+          do i=1,nx
+            call pmd_fseek(unit, int8(idx), 1)
+            call pmd_rd(unit, box(i,j,k))
+            call pmd_fseek(unit, int8(node_sz-idx-pmd_header%db_sz), 1)
+          end do
+        end do
+      end do
+    endif
+  endif
+  !
+  call pmd_close(unit)
+  !
+end subroutine rd_nodebox
 !
 subroutine openwr(unit, ltime, file, magic_str, endianness, int_sz, db_sz, &
                   pmd_version, localtime, periodic, domain_sz, domain_origin, &
