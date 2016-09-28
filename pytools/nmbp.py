@@ -341,6 +341,43 @@ def export_nMBPs(modelfile, parfile, meanfile, height, box=(100,100,100)):
 	with open(filename+'.nmbps', 'wb') as f:
 		f.write(xdr.get_buffer())
 
+def show_nMBPs(indexfile):
+	'''
+	Show all available nMBPs in indexfile
+	'''
+
+	with open(indexfile, 'rb') as f:
+		xdr = xdrlib.Unpacker(f.read())
+	if xdr.unpack_string() != 'nmbps_index':
+		print('Error: unknown file.')
+		return
+	Nx = xdr.unpack_int()
+	Ny = xdr.unpack_int()
+	pt = 0
+	Npts = 0
+	while xdr.unpack_bool():
+		rad = np.array(xdr.unpack_array(xdr.unpack_float)).reshape((Nx, Ny))
+		Npts = xdr.unpack_int()
+		pt = 0
+		pX = []
+		pY = []
+		circs = []
+		while pt < Npts:
+			pt += 1
+			modelitime = xdr.unpack_int()
+			pX = xdr.unpack_int()
+			pY = xdr.unpack_int()
+			contrast_local  = xdr.unpack_float()
+			contrast_global = xdr.unpack_float()
+			diametre        = xdr.unpack_float()
+			active_flag	= xdr.unpack_bool()
+			if active_flag:
+				circs += [plt.Circle((pX,pY),50,color='r',fill=False)]
+		fig = plt.figure()
+		plt.imshow(rad.T,origin='bottom',cmap=plt.cm.gray)
+		for c in circs:
+			fig.gca().add_artist(c)
+
 def import_nMBPs(indexfile, parfile):
 	'''
 	Loads nMBPs that where written by the corresponding exporting
@@ -387,9 +424,16 @@ def importNext():
 	pY = _xdr.unpack_int()
 	contrast_local  = _xdr.unpack_float()
 	contrast_global = _xdr.unpack_float()
+	#dpos		= _xdr.get_position()
 	diametre        = _xdr.unpack_float()
 	_pos		= _xdr.get_position()
 	active_flag	= _xdr.unpack_bool()
+	#with open(_indexfile+'.nmbps', 'r+b') as f:
+	#	f.seek(dpos)
+	#	xdr = xdrlib.Packer()
+	#	xdr.pack_float(2.*diametre)
+	#	f.write(xdr.get_buffer())
+	#return True
 	# Load uio_file here!
 	_modelfile = _indexfile + '_' + str(modelitime) + '_' + str(pX) + '_' + str(pY) + '.uio'
 	if load_uio(_modelfile, _parfile) >= 0:
@@ -420,22 +464,22 @@ def report():
 	tau = 1.
 	r = 3
 	tau1_level=np.array(pybold.level(model.dq.tau,tau),dtype=int)
-        tau1=int(round(np.mean(tau1_level)))
-        tau1min=int(round(np.min(tau1_level)))
+	tau1=int(round(np.mean(tau1_level)))
+	tau1min=int(round(np.min(tau1_level)))
 	seed=[_parameters[0][0]-model.z.dimension[0][0],_parameters[0][1]-model.z.dimension[0][1],tau1]
 	s=snake.snake_from_box(model.z.rho,radius=r,start=tau1,periodic=False,seed=seed)
 	tau1_sindex = int(list(s[:,2]).index(tau1))
-        xmean = int(s[tau1_sindex,0])
-        ymean = int(s[tau1_sindex,1])
+	xmean = int(s[tau1_sindex,0])
+	ymean = int(s[tau1_sindex,1])
 	odb=snake.select_disk(model.z.rho[:,:,tau1],(xmean,ymean),threshold=.5)
 	rot_index = np.argmin(model.z.v1[:,:,tau1][odb[0]]**2)
-        xrot,yrot = odb[0][0][rot_index], odb[0][1][rot_index]
+	xrot,yrot = odb[0][0][rot_index], odb[0][1][rot_index]
 	xc1, xc2 = model.z.xc1.flatten()/1.e5, model.z.xc2.flatten()/1.e5
 	xb1, xb2 = model.z.xb1.flatten()/1.e5, model.z.xb2.flatten()/1.e5
 	ext = [xc1[0],xc1[-1],xc2[0],xc2[-1]]
 	#Ttau1 = pybold.varAtLevel(model.dq.T,model.dq.tau,1.)
 	rhotau1 = pybold.varAtLevel(model.z.rho,model.dq.tau,1.)
-        #plt.imshow(model.z.rho[:,:,tau1].T,origin='bottom',cmap=plt.cm.gray,extent=ext)
+	#plt.imshow(model.z.rho[:,:,tau1].T,origin='bottom',cmap=plt.cm.gray,extent=ext)
         plt.imshow(rhotau1.T,origin='bottom',extent=ext)
 	plt.xlim(xc1[0],xc1[-1])
 	plt.ylim(xc2[0],xc2[-1])
@@ -463,16 +507,17 @@ def report():
                 title = _modelfile.split('.')
                 title = '.'.join(title[:max(1,len(title)-1)])
 	boxtext = 'Wilson depression: '+str(int(round(wd/1.e5)))+' [km]\n'
-        boxtext+= 'Density contrast: '+str(int(round(100*c_rho[0])))+'%, '
-        boxtext+= str(int(round(100*c_rho[1])))+'%\n'
-        boxtext+= 'Pressure contrast: '+str(int(round(100*c_p[0])))+'%, '
-        boxtext+= str(int(round(100*c_p[1])))+'%'
+        boxtext+= 'Density contrast: '+str(int(round(100*c_rho[1])))+'%, '
+        boxtext+= str(int(round(100*c_rho[0])))+'%\n'
+        boxtext+= 'Pressure contrast: '+str(int(round(100*c_p[1])))+'%, '
+        boxtext+= str(int(round(100*c_p[0])))+'%'
 	diam = _parameters[3]
 	delta = model.z.xc1[1,:,:]-model.z.xc1[0,:,:]
         boxtext+= '\nDiametre: '+str(int(round(diam*delta/1.e5)))+' [km]'
 	c_I = (_parameters[1], _parameters[2])
         boxtext+= '\nIntensity contrast: '+str(int(round(100*c_I[0])))+'%, '
         boxtext+= str(int(round(100*c_I[1])))+'%'
+	boxtext+= '\nLifetime: '+str(int(round(120.)))+' [s]'
 	fig = plt.figure()
 	ax = fig.add_subplot(1,1,1)
 	deltaX = xb1[1]-xb1[0]
