@@ -1822,7 +1822,7 @@ else
 endif
 do i3=m3,k1
   dkds(:,:,i3) = -( dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) - &
-                    dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) ) / dz(i3)
+                    dq_kappa(:,:,i3)*dq_rho(:,:,i3) ) / dz(i3)
 end do
 !
 ! TOP
@@ -1852,7 +1852,7 @@ end do
 !
 do i3=n3-1,m3,-1
   dq_tau(:,:,i3) = dq_tau(:,:,i3+1) + dz(i3)*( 0.5*( &
-    ( dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) + dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) ) &
+    ( dq_kappa(:,:,i3+1)*dq_rho(:,:,i3+1) + dq_kappa(:,:,i3)*dq_rho(:,:,i3) ) &
     ) ) + dz(i3)*( dxds(:,:,i3+1)-dxds(:,:,i3) )/12.0
 end do
 !
