@@ -243,7 +243,7 @@ def level1D(col, l, t=None, rounding=False):
 	ext=(col<=l)
 	ext=np.logical_or(ext[:-1], ext[1:])
 	ext=np.where(ext)
-	if len(ext)!=1: return np.nan
+	if len(ext[0])==0: return np.nan
 	ext=ext[0][0]
 	if rounding:
 		return t(ext)+t(round((t(l)-col[ext])/(col[ext+1]-col[ext])))
