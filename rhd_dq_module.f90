@@ -1843,7 +1843,7 @@ do i3=n3-1,m3+1,-1
        ( 2.0*(dz(k1)+dz(k2)) )
   s4 = min(s3, dkds(:,:,k1), dkds(:,:,k2))
   s5 = max(s3, dkds(:,:,k1), dkds(:,:,k2))
-  dxds(:,:,k1) = 1.5*dkds(:,:,k1) - (max(s4,0.)+min(s5,0.))
+  dxds(:,:,k1) = 2.0*(max(s4,0.)+min(s5,0.))
 end do
 !
 ! BOTTOM
