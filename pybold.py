@@ -1436,13 +1436,13 @@ class uio_struct(dict):
 			xc2=np.array(self.z['xc2'].value[:,rangeY[:-1],:],order='F', dtype=arrtype)
 			xb2 = extend_periodically(xb2,periodY,periodicity_dir[1])
 			xc2 = extend_periodically(xc2,periodY,periodicity_dir[1])
-                if steps[2]==1 and not periodicity_flag :
+                if steps[2]==1 :
 			xb3=np.asfortranarray(self.z['xb3'].value[:,:,id_min[2]:id_max[2]])
 			xc3=np.asfortranarray(self.z['xc3'].value[:,:,id_min[2]:id_max[2]-1])
                 else :
                         #xb3=np.array(self.z['xb3'].value[:,:,id_min[2]:id_max[2]:steps[2]],order='F', dtype=arrtype)
                         #xb3=np.array(self.z['xc3'].value[:,:,id_min[2]:id_max[2]-1:steps[2]],order='F', dtype=arrtype)
-			rangeZ = np.arange(id_min[2],id_max[2],steps[2])%(nZ-1)
+			rangeZ = np.arange(id_min[2],id_max[2],steps[2])
 			xb3=np.array(self.z['xb3'].value[:,:,rangeZ],order='F', dtype=arrtype)
 			xc3=np.array(self.z['xc3'].value[:,:,rangeZ[:-1]],order='F', dtype=arrtype)
 		v1=self.z['v1'].value
