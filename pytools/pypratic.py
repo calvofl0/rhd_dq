@@ -16,7 +16,7 @@ def readHeader(model):
 
 	(header.version,) = unpack('i', model.module_header[offset:offset+int_sz])
 	offset += int_sz
-	if header.version != 1:
+	if header.version != 1 and header.version != 2:
 		raise Exception("Version of pratic module unsupported (only v1 supported).")
 	(header.Nfreq,) = unpack('i', model.module_header[offset:offset+int_sz])
 	offset += int_sz
@@ -50,6 +50,7 @@ def writeHeader(header, model):
 	h += [pack(header.T.T.flatten())]
 
 	model.module_header = ''.join(h)
+        model.module_hd_sz = len(model.module_header)
 
 def readNodes(model):
 	nx, ny, nz = model.dimensions
@@ -60,27 +61,44 @@ def readNodes(model):
 	db_sz      = model.db_sz
 
 	node_data = Struct()
-	node_data.ne      = np.empty(model.dimensions)
-	node_data.nH1     = np.empty(model.dimensions)
+        if header.version == 1:
+	    node_data.ne      = np.empty(model.dimensions)
+	    node_data.nH1     = np.empty(model.dimensions)
 	node_data.T       = np.empty(model.dimensions)
 	node_data.kappa_c = np.empty((Nfreq, nx, ny, nz))
+        if header.version == 2:
+	    node_data.kappa_s = np.empty((Nfreq, nx, ny, nz))
 	node_data.JKQ     = np.empty((NJKQ, Nfreq, nx, ny, nz))
-	for i in range(nx):
-		for j in range(ny):
-			for k in range(nz):
-				offset = 0
-				(node_data.ne[i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
-				offset += db_sz
-				(node_data.nH1[i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
-				offset += db_sz
-				(node_data.T[i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
-				offset += db_sz
-				for f in range(Nfreq):
-
-					(node_data.kappa_c[f,i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
-					offset += db_sz
-					node_data.JKQ[:,f,i,j,k] = unpack(str(NJKQ)+'d', model.node_data[i,j,k][offset:offset+db_sz*NJKQ])
-					offset += db_sz*NJKQ
+        if header.version == 1:
+	    for i in range(nx):
+		    for j in range(ny):
+			    for k in range(nz):
+				    offset = 0
+				    (node_data.ne[i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
+				    offset += db_sz
+				    (node_data.nH1[i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
+				    offset += db_sz
+				    (node_data.T[i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
+				    offset += db_sz
+				    for f in range(Nfreq):
+					    (node_data.kappa_c[f,i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
+					    offset += db_sz
+					    node_data.JKQ[:,f,i,j,k] = unpack(str(NJKQ)+'d', model.node_data[i,j,k][offset:offset+db_sz*NJKQ])
+					    offset += db_sz*NJKQ
+        if header.version == 2:
+	    for i in range(nx):
+		    for j in range(ny):
+			    for k in range(nz):
+				    offset = 0
+				    (node_data.T[i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
+				    offset += db_sz
+				    for f in range(Nfreq):
+					    (node_data.kappa_c[f,i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
+					    offset += db_sz
+					    (node_data.kappa_s[f,i,j,k],) = unpack('d', model.node_data[i,j,k][offset:offset+db_sz])
+					    offset += db_sz
+					    node_data.JKQ[:,f,i,j,k] = unpack(str(NJKQ)+'d', model.node_data[i,j,k][offset:offset+db_sz*NJKQ])
+					    offset += db_sz*NJKQ
 	return node_data
 
 def writeNodes(node_data, model):
@@ -90,28 +108,48 @@ def writeNodes(node_data, model):
 	int_sz     = model.int_sz
 	db_sz      = model.db_sz
 
-	if not np.all(np.shape(node_data.ne) == model.dimensions):
-		raise Exception("Variable 'ne' must have shape "+str(model.dimensions)+".")
-	if not np.all(np.shape(node_data.nH1) == model.dimensions):
-		raise Exception("Variable 'nH1' must have shape "+str(model.dimensions)+".")
+        if header.version == 1:
+	    if not np.all(np.shape(node_data.ne) == model.dimensions):
+		    raise Exception("Variable 'ne' must have shape "+str(model.dimensions)+".")
+	    if not np.all(np.shape(node_data.nH1) == model.dimensions):
+		    raise Exception("Variable 'nH1' must have shape "+str(model.dimensions)+".")
 	if not np.all(np.shape(node_data.T) == model.dimensions):
 		raise Exception("Variable 'T' must have shape "+str(model.dimensions)+".")
 	if not np.all(np.shape(node_data.kappa_c) == (Nfreq, nx, ny, nz)):
 		raise Exception("Variable 'kappa_c' must have shape "+str((Nfreq,nx,ny,nz))+".")
+        if header.version == 2:
+	    if not np.all(np.shape(node_data.kappa_s) == (Nfreq, nx, ny, nz)):
+		    raise Exception("Variable 'kappa_s' must have shape "+str((Nfreq,nx,ny,nz))+".")
 	if not np.all(np.shape(node_data.JKQ) == (NJKQ, Nfreq, nx, ny, nz)):
 		raise Exception("Variable 'JKQ' must have shape "+str((NJKQ,Nfreq,nx,ny,nz))+".")
 
-	nd = np.empty((nx,ny,nz,db_sz*(3+(1+NJKQ)*Nfreq)), dtype=np.uint8)
-	for i in range(nx):
-		for j in range(ny):
-			for k in range(nz):
-				offset = 0
-				nd[i,j,k][:3*db_sz] = pack((node_data.ne[i,j,k], node_data.nH1[i,j,k], node_data.T[i,j,k]), output='ord')
-				offset += 3*db_sz
-				for f in range(Nfreq):
-					nd[i,j,k][offset:offset+db_sz] = pack(node_data.kappa_c[f,i,j,k], output='ord')
-					offset += db_sz
-					nd[i,j,k][offset:offset+NJKQ*db_sz] = pack(node_data.JKQ[:,f,i,j,k], output='ord')
-					offset += NJKQ*db_sz
+        if header.version == 1:
+	    nd = np.empty((nx,ny,nz,db_sz*(3+(1+NJKQ)*Nfreq)), dtype=np.uint8)
+	    for i in range(nx):
+		    for j in range(ny):
+			    for k in range(nz):
+				    offset = 0
+				    nd[i,j,k][:3*db_sz] = pack((node_data.ne[i,j,k], node_data.nH1[i,j,k], node_data.T[i,j,k]), output='ord')
+				    offset += 3*db_sz
+				    for f in range(Nfreq):
+					    nd[i,j,k][offset:offset+db_sz] = pack(node_data.kappa_c[f,i,j,k], output='ord')
+					    offset += db_sz
+					    nd[i,j,k][offset:offset+NJKQ*db_sz] = pack(node_data.JKQ[:,f,i,j,k], output='ord')
+					    offset += NJKQ*db_sz
+        if header.version == 2:
+	    nd = np.empty((nx,ny,nz,db_sz*(1+(2+NJKQ)*Nfreq)), dtype=np.uint8)
+	    for i in range(nx):
+		    for j in range(ny):
+			    for k in range(nz):
+				    offset = 0
+				    nd[i,j,k][:1*db_sz] = pack((node_data.T[i,j,k]), output='ord')
+				    offset += 1*db_sz
+				    for f in range(Nfreq):
+					    nd[i,j,k][offset:offset+db_sz] = pack(node_data.kappa_c[f,i,j,k], output='ord')
+					    offset += db_sz
+					    nd[i,j,k][offset:offset+db_sz] = pack(node_data.kappa_s[f,i,j,k], output='ord')
+					    offset += db_sz
+					    nd[i,j,k][offset:offset+NJKQ*db_sz] = pack(node_data.JKQ[:,f,i,j,k], output='ord')
+					    offset += NJKQ*db_sz
 
 	model.node_data = nd
