@@ -898,7 +898,10 @@ class uio_struct(dict):
 			    elif qtype == self.__compna:
 			        item.value = np.array(uio_reader_module.comp1D)
 			    elif qtype == self.__charna:
-			        item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char1D))
+                                try:
+			            item.value = uio_reader_module.char1D.item().strip()
+                                except:
+			            item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char1D))
 			elif ndim == 2 :
 			  if qtype == self.__intena:
 			      item.value = np.array(uio_reader_module.inte2D)
@@ -907,7 +910,10 @@ class uio_struct(dict):
 			  elif qtype == self.__compna:
 			      item.value = np.array(uio_reader_module.comp2D)
 			  elif qtype == self.__charna:
-			        item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char2D))
+                                try:
+			            item.value = vstrip(np.apply_along_axis(np.ndarray.item,-1,uio_reader_module.char2D))
+                                except:
+			            item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char2D))
 			elif ndim == 3 :
 			  if qtype == self.__intena:
 			      item.value = np.array(uio_reader_module.inte3D)
@@ -916,7 +922,10 @@ class uio_struct(dict):
 			  elif qtype == self.__compna:
 			      item.value = np.array(uio_reader_module.comp3D)
 			  elif qtype == self.__charna:
-			        item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char3D))
+                                try:
+			            item.value = vstrip(np.apply_along_axis(np.ndarray.item,-1,uio_reader_module.char3D))
+                                except:
+			            item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char3D))
 			elif ndim == 4 :
 			  if qtype == self.__intena:
 			      item.value = np.array(uio_reader_module.inte4D)
@@ -925,7 +934,10 @@ class uio_struct(dict):
 			  elif qtype == self.__compna:
 			      item.value = np.array(uio_reader_module.comp4D)
 			  elif qtype == self.__charna:
-			        item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char4D))
+                                try:
+			            item.value = vstrip(np.apply_along_axis(np.ndarray.item,-1,uio_reader_module.char4D))
+                                except:
+			            item.value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char4D))
 			item._parent = self
 			self[label] = item
 			return
@@ -974,7 +986,10 @@ class uio_struct(dict):
 			elif qtype == self.__compna:
 				value = np.array(uio_reader_module.comp1D)
 			elif qtype == self.__charna:
-			        value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char1D))
+                                try:
+			            item.value = uio_reader_module.char1D.item().strip()
+                                except:
+			            value = vstrip(np.apply_along_axis(''.join,-1,uio_reader_module.char1D))
 			else : value = np.array([], dtype=object)
 			self[table].value.table += [value]
 		return
@@ -1322,7 +1337,11 @@ class uio_struct(dict):
 		read_next(self.record)
 		if hasattr(self, 'dq') and uio_reader_module.r_imodel.item() >= 0 :
 			self.record('delete','dq')
-		if ''.join(uio_reader_module.r_parfile).strip() != '' and uio_reader_module.r_imodel.item() >= 0 :
+                try:
+                    r_parfile = uio_reader_module.r_parfile.item().strip()
+                except:
+                    r_parfile = ''.join(uio_reader_module.r_parfile).strip()
+		if r_parfile != '' and uio_reader_module.r_imodel.item() >= 0 :
 			self.record('create', 'dq')
 			self.dq.box_id = 'dq'
 			dqs = self.dq_units()
