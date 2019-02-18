@@ -886,7 +886,10 @@ class uio_struct(dict):
 			    elif qtype == self.__compna:
 			        item.value = uio_reader_module.comp0.item()
 			    elif qtype == self.__charna:
-			        item.value = ''.join(uio_reader_module.char0).strip()
+                                try:
+			            item.value = uio_reader_module.char0.item().strip()
+                                except:
+			            item.value = ''.join(uio_reader_module.char0).strip()
 			  else :
 			    if qtype == self.__intena:
 			        item.value = np.array(uio_reader_module.inte1D)
