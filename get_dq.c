@@ -1,14 +1,14 @@
 #include<string.h>
 #include<stdio.h>
 
-extern void rhd_dq_module_mp_rhd_dq_init_( \
+extern void rhd_dq_module_MOD_rhd_dq_init( \
 		char* /* parfile */, char* /* modelfile */, \
 		int* /* nc_p */, int* /* imodel */, \
 		int /* l_parfile */, int /* l_modelfile */);
 
 extern void get_dq_(int* /* dq */);
 
-#define rhd_dq_init_ rhd_dq_module_mp_rhd_dq_init_
+#define rhd_dq_init_ __rhd_dq_module_MOD_rhd_dq_init
 
 void rhd_dq_init(char* parfile, char* modelfile, \
 		int nc_p, int imodel) {
