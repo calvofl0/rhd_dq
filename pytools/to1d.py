@@ -3,14 +3,16 @@
 
 #from pybold import level   # Slow routine coded in Python
 from pylevel import level   # Fast routine coded in C
-from numpy import mean, nanmean, asarray, arange, zeros_like, where, nan, isnan, empty, empty_like, shape, meshgrid, ceil
+from numpy import mean, nanmean, asarray, arange, zeros_like, where, nan, isnan, empty, empty_like, shape, mgrid, ceil
 from scipy.interpolate.interpolate import spline
 from numpy import count_nonzero, logical_not, argwhere, float32, asarray, zeros, newaxis, copyto
 from numpy import min as npmin
 from numpy import max as npmax
+from numpy import any as npany
+from numpy import log, exp
 from _pybold import write_model
 
-def zScale(tau_box, tau, isotau_flag=False):
+def zScale(tau_box, tau, isotau_flag=False, nan_flag=True):
     l = zeros_like(tau_box[:,:,0])
     z = []
     if isotau_flag:
@@ -25,20 +27,30 @@ def zScale(tau_box, tau, isotau_flag=False):
             l = level(tau_box, t, l)
             if isotau_flag:
                 isotau[:,:,i] = l
-            z += [nanmean(l)]
+            if not nan_flag:
+                if npany(isnan(l)):
+                    z+=[nan]
+                    if isotau_flag:
+                        isotau[:,:,i] = nan
+                else:
+                    z += [nanmean(l)]
+            else:
+                z += [nanmean(l)]
 
     if isotau_flag:
-        return z, isotau
-    return z
+        return asarray(z), isotau
+    return asarray(z)
 
-def tauScale(tau_box, isotau_flag=False):
+def tauScale(tau_box, isotau_flag=False, nan_flag=True):
     tau = mean(mean(tau_box,axis=0),axis=0)
     if isotau_flag:
-        z, isotau = zScale(tau_box, tau, isotau_flag)
+        z, isotau = zScale(tau_box, tau, isotau_flag, nan_flag)
     else:
-        z = zScale(tau_box, tau, isotau_flag)
-    s = spline(z, tau, arange(len(z)))
-    s[where(s==0.)] = nan
+        z = zScale(tau_box, tau, isotau_flag, nan_flag)
+    idx = where(logical_not(isnan(z)))
+    s = exp(spline(z[idx], log(tau[idx]), arange(len(z))))
+    s[where(s==1.)] = nan
+    z, isotau = zScale(tau_box, s, isotau_flag, nan_flag)
 
     if isotau_flag:
         return s, isotau
@@ -58,8 +70,8 @@ def meanVarAtIsotau(var, isotau):
         isosurf = (isotau[:,:,i]-frac).astype(int)
         isosurf[nanvals] = 0
         #isosurf[where(isosurf>=nz-1)] = 0
-        indices=tuple(list(meshgrid(range(ny),range(nx)))+[isosurf])
-        indicesR=tuple(list(meshgrid(range(ny),range(nx)))+[isosurf+1])
+        indices=tuple(list(mgrid[:nx,:ny])+[isosurf])
+        indicesR=tuple(list(mgrid[:nx,:ny])+[isosurf+1])
         if type(var) is tuple:
             for j in range(len(var)):
                 varAtIsotau = (1.-frac)*var[j][indices]+frac*var[j][indicesR]
@@ -88,7 +100,7 @@ def export1d(model, outfile, nx=3, ny=3, flat=False, arrtype=float32):
     tau_box = model.dq.tau
     # Get ``equidistant'' tau-isosurfaces
     if not flat:
-        tau, isotau = tauScale(tau_box, isotau_flag=True)
+        tau, isotau = tauScale(tau_box, isotau_flag=True, nan_flag=False)
     # Average physical quantities on those surfaces (var is a tuple containing, for each quantity, a 1d-vector where each element is the average on the corresponding tau isosurface
     v1 = model.z['v1'].value
     v2 = model.z['v2'].value
