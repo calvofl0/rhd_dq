@@ -94,10 +94,10 @@ python module _pybold ! in
         module uio_reader_module ! in :pybold:uio_struct_rd.f90
             use uio_table_module
             integer :: ndim
-            character, allocatable,dimension(:,:) :: char1D
+            byte, allocatable,dimension(:,:) :: char1D
             character*(80) :: char0
             real, allocatable,dimension(:,:,:,:) :: real4D
-            character, allocatable,dimension(:,:,:,:) :: char3D
+            byte, allocatable,dimension(:,:,:,:) :: char3D
             complex :: comp0
             integer, allocatable,dimension(:) :: inte1D
             real, allocatable,dimension(:,:) :: real2D
@@ -111,12 +111,12 @@ python module _pybold ! in
             integer :: m3
             integer :: m2
             integer :: inte0
-            character, allocatable,dimension(:,:,:) :: char2D
+            byte, allocatable,dimension(:,:,:) :: char2D
             integer, allocatable,dimension(:,:,:,:) :: inte4D
             real, allocatable,dimension(:) :: real1D
             real :: real0
             integer, allocatable,dimension(:,:) :: inte2D
-            character, allocatable,dimension(:,:,:,:,:) :: char4D
+            byte, allocatable,dimension(:,:,:,:,:) :: char4D
             complex, allocatable,dimension(:,:,:) :: comp3D
             real, allocatable,dimension(:,:,:) :: real3D
             character*(80) :: name0

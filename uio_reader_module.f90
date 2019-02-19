@@ -123,10 +123,10 @@ complex, allocatable, dimension(:,:)    :: comp2D
 complex, allocatable, dimension(:,:,:)  :: comp3D
 complex, allocatable, dimension(:,:,:,:)        :: comp4D
 character*(let)                                 :: char0
-character, allocatable, dimension(:,:)          :: char1D
-character, allocatable, dimension(:,:,:)        :: char2D
-character, allocatable, dimension(:,:,:,:)      :: char3D
-character, allocatable, dimension(:,:,:,:,:)    :: char4D
+byte, allocatable, dimension(:,:)               :: char1D
+byte, allocatable, dimension(:,:,:)             :: char2D
+byte, allocatable, dimension(:,:,:,:)           :: char3D
+byte, allocatable, dimension(:,:,:,:,:)         :: char4D
 character*(let), allocatable, dimension(:)      :: string1D
 character*(let), allocatable, dimension(:,:)    :: string2D
 character*(let), allocatable, dimension(:,:,:)  :: string3D
@@ -410,7 +410,7 @@ if (qtype == tabna) then
                 call uio_tabget(tab, label, string1D, termt=termt, ntt=ntt, &
                                 outstr=outstr0, ierr=ierr0)
                 do i=1,let
-                    char1D(:,i)=string1D(:)(i:i)
+                    char1D(:,i)=ichar(string1D(:)(i:i))
                 end do
                 if (.not. norec0) call record('table:'//ident)
                 deallocate(char1D, string1D)
@@ -499,7 +499,7 @@ else
                                           outstr=outstr0, ierr=ierr0)
                               !print*, string1D
                               do i=1,let
-                                  char1D(:,i)=string1D(:)(i:i)
+                                  char1D(:,i)=ichar(string1D(:)(i:i))
                               end do
                               if (.not. norec0) call record('copy')
                               deallocate(char1D, string1D)
@@ -542,7 +542,7 @@ else
                                   outstr=outstr0, ierr=ierr0)
                       !print*, string2D
                       do i=1,let
-                          char2D(:,:,i)=string2D(:,:)(i:i)
+                          char2D(:,:,i)=ichar(string2D(:,:)(i:i))
                       end do
                       if (.not. norec0) call record('copy')
                       deallocate(char2D, string2D)
@@ -584,7 +584,7 @@ else
                                   outstr=outstr0, ierr=ierr0)
                       !print*, string3D
                       do i=1,let
-                          char3D(:,:,:,i)=string3D(:,:,:)(i:i)
+                          char3D(:,:,:,i)=ichar(string3D(:,:,:)(i:i))
                       end do
                       if (.not. norec0) call record('copy')
                       deallocate(char3D, string3D)
@@ -626,7 +626,7 @@ else
                                   outstr=outstr0, ierr=ierr0)
                       !print*, string4D
                       do i=1,let
-                          char4D(:,:,:,:,i)=string4D(:,:,:,:)(i:i)
+                          char4D(:,:,:,:,i)=ichar(string4D(:,:,:,:)(i:i))
                       end do
                       if (.not. norec0) call record('copy')
                       deallocate(char4D, string4D)
