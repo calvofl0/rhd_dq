@@ -20,6 +20,12 @@ not, see <https://opensource.org/licenses/MIT>.
 **Whatever work you do and distribute based on the present code IS HEAVILY
 ENCOURAGED to be licensed with a free and open-source software license.**
 
+The files under the 3dparty directory are external 3rd-party software and are
+not covered by the present copyright, as well as the files that explicitly
+provide copyright information and license. All files outside of the 3dparty
+folder and with no explicit copyright notice are part of the present project
+and are threfore covered by the present copyright.
+
 Requirements
 ------------------
 The *pybold* python module was tested with both Python 2.7 and Python 3, and with NumPy 1.11.0 and above. *f2py* is required at compile time, and many distributions provide it as a side package *numpy-develop*.
