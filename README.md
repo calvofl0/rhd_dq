@@ -27,9 +27,9 @@ The *pybold* python module was tested with both Python 2.7 and Python 3, and wit
 Compilation
 ---------------
 Compile the code with
-```
-> ./configure
-> make pybold
+```shell
+./configure
+make pybold
 ```
 Compilation went successful if the last output line is
 
@@ -45,37 +45,37 @@ The pybold interface
 
 In Python, start importing the *pybold* module and creating a model structure. You can easily get help on the model structure:
 
-```
->>> import pybold
->>> model = pybold.uio_struct()
->>> help(model)
+```python
+import pybold
+model = pybold.uio_struct()
+help(model)
 ```
 
 The contents of an UIO file can be loaded into the model structure and displayed with
 
-```
->>> model.load('myfile.uio')
->>> model
+```python
+model.load('myfile.uio')
+model
 ```
 
 For instance, you could load a parameter file and display its contents with
 
-```
->>> model.load('myfile.uio')
->>> model
+```python
+model.load('myfile.uio')
+model
 ```
 
 Note however that if the UIO file contains several atmosphere snapshots, only the last one is loaded. If you need to process all the snapshots of an UIO file, say a MEAN file *rhd.mean*, you might prefer to use
 
 ```python
->>> model.open('rhd.mean')
->>> model.header        # load the header
->>> model.next          # load the first snapshot
->>> # ...do your processing...
->>> model.next
->>> # ...do your processing...
->>> # ...
->>> model.close
+model.open('rhd.mean')
+model.header        # load the header
+model.next          # load the first snapshot
+# ...do your processing...
+model.next
+# ...do your processing...
+# ...
+model.close
 ```
 
 Derived quantities with the pybold interface
@@ -83,26 +83,25 @@ Derived quantities with the pybold interface
 
 Assuming you have a parameter file *rhd.par* with the corresponding files for the equation of state and for opacities, and you are interested in the second snapshot of the FULL file *rhd.full*, you can load it into the model structure using
 
-```
->>> model.load('rhd.full', 'rhd.par', 2)
+```python
+model.load('rhd.full', 'rhd.par', 2)
 ```
 
 You will find a new substructure *dq* with all *d*erived *q*uantities:
 
-```
->>> model.dq
->>> model.dq.T          # compute temperature
+```python
+model.dq
+model.dq.T          # compute temperature
 ```
 
 Derived quantities are computed (and corresponding memory allocated) on an on-request basis.
 
 It is also possible to use the open statement with parameter files:
 
+```python
+model.open('rhd.full', 'rhd.par')
+model.header        # load the header into the model structure
+model.next          # load the first snapshot
+model.next          # load the second snapshot
+model.close         # close `rhd.full'
 ```
->>> model.open('rhd.full', 'rhd.par')
->>> model.header        # load the header into the model structure
->>> model.next          # load the first snapshot
->>> model.next          # load the second snapshot
->>> model.close         # close `rhd.full'
-```
-
