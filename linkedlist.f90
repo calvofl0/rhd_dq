@@ -24,6 +24,8 @@
 ! OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ! OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+! Authors: Arjen Markus and Michael Baudin (authors of FLIBS)
+
 ! linkedlist.f90 --
 !     Include file for defining linked lists where each element holds
 !     the same kind of data
