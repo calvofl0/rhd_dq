@@ -30,11 +30,22 @@ Requirements
 ------------------
 The *pybold* python module was tested with both Python 2.7 and Python 3, and with NumPy 1.11.0 and above. *f2py* is required at compile time, and many distributions provide it as a side package *numpy-develop*.
 
+The sources of the CO5BOLD code are also required.
+
 Compilation
 ---------------
-Compile the code with
+First identify the path to the CO5BOLD source files on your computer and check
+the configuration in <CO5BOLD_SRC>/hd/rhd/<YOUR_MACHINE>/.configurerc. The
+CO5BOLD code must compile with no errors on your machine, and the F90_POSTFLAGS
+variable in the configuration file must contain the compilation flag
+"-Drhd_box_arrays01=0".
+
+You can find additional information about CO5BOLD configuration and compilation
+in <CO5BOLD_SRC>/README.
+
+Compile the pybold module with
 ```shell
-./configure
+./configure ARCH=<YOUR_MACHINE> F90_BASEPATH=<CO5BOLD_SRC> COBOLD_3DPARTY=no
 make pybold
 ```
 Compilation went successful if the last output line is
