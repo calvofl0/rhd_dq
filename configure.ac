@@ -12,7 +12,7 @@ then
 else
 	DEPSRCPATH="$F90_BASEPATH/hd/rhd/$ARCH"
 	COBOLD_3DPARTY="no"
-	grep -q "function xkaros" $DEPSRCPATH/opta_routines.f90
+	grep -q "function xkaros" $DEPSRCPATH/opta_routines.{f,F}90 &> /dev/null
 	if test $? -ne 0
 	then
 		XKAROS_INTERFACE=-DXKAROS_INTERFACE
