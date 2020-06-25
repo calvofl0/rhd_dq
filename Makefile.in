@@ -152,7 +152,9 @@ dep: depend
 	
 
 depend: $(DEP)
+ifneq ($(COBOLD_3DPARTY),yes)
 	@ln -sf ../../../uio/f90/uio_table_module.f90 $(DEPSRCPATH)/.
+endif
 	@(if [ -f $(DEPSRCPATH)/Makefile ]; then \
 		cd $(DEPSRCPATH) && $(MAKE) $^; \
 	else \
