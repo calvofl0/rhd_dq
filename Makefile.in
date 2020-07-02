@@ -65,7 +65,12 @@ OUTLIB=_pybold.so pypmd.so
 SRC=$(wildcard rhd*.f90) $(wildcard uio*.f90)
 OBJ=$(SRC:.f90=.o)
 GETDQ_OBJ=get_dq_f90.o get_dq.o
-DEP=rhd_sub_module.o gasinter_routines.o str_module.o const_module.o uio_bulk_module.o rhd_action_module.o rhd_box_module.o rhd_gl_module.o rhd_io_module.o rhd_prop_module.o uio_base_module.o uio_bulk_module.o uio_mac_module.o uio_table_module.o opta_routines.o
+
+ifneq ($(COBOLD_3DPARTY),yes)
+        OPTA_DUST_O=opta_dust.o
+        OPTA_DUST_PATH="$(DEPSRCPATH)/$(OPTA_DUST_O)"
+endif
+DEP=rhd_sub_module.o gasinter_routines.o str_module.o const_module.o uio_bulk_module.o rhd_action_module.o rhd_box_module.o rhd_gl_module.o rhd_io_module.o rhd_prop_module.o uio_base_module.o uio_bulk_module.o uio_mac_module.o uio_table_module.o opta_routines.o $(OPTA_DUST_O)
 
 all: $(OUT)
 	
@@ -86,6 +91,7 @@ rhd_dq_module.a: $(OBJ)
                 "$(DEPSRCPATH)/uio_mac_module.o" \
                 "$(DEPSRCPATH)/uio_table_module.o" \
                 "$(DEPSRCPATH)/opta_routines.o" \
+                 $(OPTA_DUST_PATH) \
                 "$(DEPSRCPATH)/gasinter_routines.o" \
                 "$(DEPSRCPATH)/str_module.o" \
                 "$(DEPSRCPATH)/const_module.o"
@@ -108,6 +114,7 @@ get_dq.a: $(OBJ) get_dq_f90.o get_dq.o
                 "$(DEPSRCPATH)/uio_mac_module.o" \
                 "$(DEPSRCPATH)/uio_table_module.o" \
                 "$(DEPSRCPATH)/opta_routines.o" \
+                 $(OPTA_DUST_PATH) \
                 "$(DEPSRCPATH)/gasinter_routines.o" \
                 "$(DEPSRCPATH)/str_module.o" \
                 "$(DEPSRCPATH)/const_module.o"
@@ -154,6 +161,7 @@ dep: depend
 depend: $(DEP)
 ifneq ($(COBOLD_3DPARTY),yes)
 	@ln -sf ../../../uio/f90/uio_table_module.f90 $(DEPSRCPATH)/.
+	@ln -sf ../../../uio/f90/uio_filedef_module.f90 $(DEPSRCPATH)/.
 endif
 	@(if [ -f $(DEPSRCPATH)/Makefile ]; then \
 		cd $(DEPSRCPATH) && $(MAKE) $^; \
